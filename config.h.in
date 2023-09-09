@@ -1,0 +1,5 @@
+// the configured options and settings for nabla-dna
+
+#define nabla_dna_VERSION_MAJOR @nabla-dna_VERSION_MAJOR@
+#define nabla_dna_VERSION_MINOR @nabla-dna_VERSION_MINOR@
+#define nabla_dna_VERSION_PATCH @nabla-dna_VERSION_PATCH@
