@@ -2,22 +2,25 @@
 
 #include <stdio.h>
 
-#include "graybmp.h"
+#include "ibmp.h"
 
 int
 main(int argc, char *argv[])
 {
-	graybmp_t	bmp;
+	ibmp_t	*pbmp;
 
-	printf("loaded: %d\n", graybmp_load(&bmp, argv[1]));
-	printf("width x height: %d x %d\n", bmp.dib.width, bmp.dib.height);
-	printf("bmp_bytesz: %d\n", bmp.dib.bmp_bytesz);
+	pbmp = ibmp_load(argv[1]);
+	if (pbmp == NULL) {
+		printf("failed to load]n");
+		return 1;
+	}
+	printf("width x height: %d x %d\n", pbmp->width, pbmp->height);
 
 	{
 		int	i;
 
-		for (i = 0; i < bmp.dib.width * bmp.dib.height; i++) {
-			printf("%.2f ", bmp.grayed_pixels[i]);///TEST
+		for (i = 0; i < pbmp->width * pbmp->height; i++) {
+			printf("%.2f ", pbmp->pixels[i]);///TEST
 		}
 	}
 	

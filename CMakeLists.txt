@@ -4,7 +4,7 @@ project(nabla-dna VERSION 0.0.1)
 
 configure_file(config.h.in config.h)
 
-add_executable(mkdna mkdna.c graybmp.c)
+add_executable(mkdna mkdna.c ibmp.c)
 
 target_include_directories(mkdna PUBLIC "${PROJECT_BINARY_DIR}")
 
