@@ -42,7 +42,8 @@ def _mkdna(path):
             bmp.save_dna_text(path_output, True)
         else:
             bmp.save_dna_bitmap(path_output)
-
+    else:
+        bmp.show_dna_text()
 
 def _parse_args():
     global path_input, path_output, dna_size, gray_depth, norm_gray, rotation

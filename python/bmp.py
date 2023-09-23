@@ -167,5 +167,17 @@ class Bitmap:
                 np.savetxt(f, self.bmp_dna, '%3d')
         f.close()
 
+    def show_dna_text(self):
+        size_half = int(self.size_dna / 2)
+        c = 1
+        for j in range(size_half):
+            for i in range(j, self.size_dna - c):
+                print("%d " % int(self.bmp_dna[j][i]), end='')
+            c += 1
+            print()
+        if self.size_dna % 2 == 1:
+            print("%d\n" % int(self.bmp_dna[size_half][size_half]), end='')
+
+
     def get_dna(self):
         return self.bmp_dna.reshape(-1)
