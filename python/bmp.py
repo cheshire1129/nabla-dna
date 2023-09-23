@@ -1,15 +1,32 @@
 from PIL import Image
 import numpy as np
+import math
 
 
-def _build_avg_pixel(bmp, xs, xe, ys, ye) -> float:
+def _get_intensity_sum(bmp, fws: float, fwe: float, fhs: float, fhe: float) -> float:
     intensity_sum = 0
-    count = 0
-    for j in range(ys, ye):
-        for i in range(xs, xe):
-            intensity_sum += bmp[j][i]
-            count += 1
-    return intensity_sum / count
+
+    ws: int = int(math.floor(fws))
+    we: int = int(math.ceil(fwe))
+    hs: int = int(math.floor(fhs))
+    he: int = int(math.ceil(fhe))
+
+    for h in range(hs, he):
+        weight: float = 1
+        if h == hs:
+            weight *= (1 - (fhs - hs))
+        elif h == he - 1:
+            weight *= (fhe - (he - 1))
+
+        for w in range(ws, we):
+            weight_cur: float = weight
+
+            if w == ws:
+                weight_cur = weight * (1 - (fws - ws))
+            elif w == we - 1:
+                weight_cur = weight * (fwe - (we - 1))
+            intensity_sum += bmp[h][w] * weight_cur
+    return intensity_sum
 
 
 class Bitmap:
@@ -24,7 +41,11 @@ class Bitmap:
     def build_dna_bitmap(self, path, norm_gray=False):
         img = Image.open(path)
         arr_img = np.array(img)
-        r, g, b, t = np.split(arr_img, 4, axis=2)
+        if arr_img.shape[2] == 3:
+            r, g, b = np.split(arr_img, 3, axis=2)
+        else:
+            r, g, b, t = np.split(arr_img, 4, axis=2)
+
         r = r.reshape(r.shape[:2])
         g = g.reshape(g.shape[:2])
         b = b.reshape(b.shape[:2])
@@ -35,8 +56,8 @@ class Bitmap:
 
         for j in range(self.size_dna):
             for i in range(self.size_dna):
-                self.bmp_dna[j][i] = _build_avg_pixel(bmp, int(round(bmp_unit_w * i)), int(round(bmp_unit_w * (i + 2))),
-                                                      int(round(bmp_unit_h * j)), int(round(bmp_unit_h * (j + 2))))
+                self.bmp_dna[j][i] = _get_intensity_sum(bmp, bmp_unit_w * i, bmp_unit_w * (i + 1), bmp_unit_h * j,
+                                                        bmp_unit_h * (j + 1)) / (bmp_unit_w * bmp_unit_h)
         if self.rotation:
             self._merge_rotation()
         if norm_gray:
