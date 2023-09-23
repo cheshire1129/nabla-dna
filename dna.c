@@ -189,3 +189,13 @@ build_nabla_dna(ibmp_t *ibmp, int dna_size)
 
 	return dnabla;
 }
+
+void
+free_dnabla(dnabla_t *dnabla)
+{
+	if (dnabla == NULL)
+		return;
+	if (dnabla->pixels)
+		free(dnabla->pixels);
+	free(dnabla);
+}

@@ -10,5 +10,6 @@ typedef struct {
 
 extern dnabla_t *build_nabla_dna(ibmp_t *ibmp, int dna_size);
 extern int get_n_nabla_pixels(int dna_size);
+extern void free_dnabla(dnabla_t *dnabla);
 
 #endif
