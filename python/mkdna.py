@@ -8,12 +8,13 @@ from bmp import Bitmap
 
 DNA_SIZE_DEFAULT = 4
 
-path_input = None
-path_output = None
+path_input: str = ""
+path_output: str = ""
 dna_size = DNA_SIZE_DEFAULT
 gray_depth = 256
 norm_gray = False
 rotation = False
+
 
 def _usage_mkdna():
     print("""\
@@ -23,7 +24,7 @@ Usage: mkdna.py [<options>] <image path>
    -s <size>: dna size (default: 4)
    -g <depth>: gray depth(default: 256)
    -n: normalize gray(default: false)
-   -r: get rotaional dna
+   -r: get rotational dna
    -o <output>: save dna as an image or text
 """)
 
@@ -44,7 +45,7 @@ def _mkdna(path):
 
 
 def _parse_args():
-    global  path_input, path_output, dna_size, gray_depth, norm_gray, rotation
+    global path_input, path_output, dna_size, gray_depth, norm_gray, rotation
 
     try:
         opts, args = getopt.getopt(sys.argv[1:], "o:s:g:nrh")

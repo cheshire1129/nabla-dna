@@ -1,6 +1,5 @@
 from PIL import Image
 import numpy as np
-import math
 
 
 def _build_avg_pixel(bmp, xs, xe, ys, ye) -> float:
@@ -24,15 +23,15 @@ class Bitmap:
 
     def build_dna_bitmap(self, path, norm_gray=False):
         img = Image.open(path)
-        arimg = np.array(img)
-        r, g, b, t = np.split(arimg, 4, axis=2)
+        arr_img = np.array(img)
+        r, g, b, t = np.split(arr_img, 4, axis=2)
         r = r.reshape(r.shape[:2])
         g = g.reshape(g.shape[:2])
         b = b.reshape(b.shape[:2])
 
         bmp = list(map(lambda x: 0.299 * x[0] + 0.587 * x[1] + 0.114 * x[2], zip(r, g, b)))
-        bmp_unit_w = arimg.shape[1] / (self.size_dna + 1)
-        bmp_unit_h = arimg.shape[0] / (self.size_dna + 1)
+        bmp_unit_w = arr_img.shape[1] / (self.size_dna + 1)
+        bmp_unit_h = arr_img.shape[0] / (self.size_dna + 1)
 
         for j in range(self.size_dna):
             for i in range(self.size_dna):
@@ -44,8 +43,8 @@ class Bitmap:
             self._normalize_gray()
 
         for j in range(self.size_dna):
-             for i in range(self.size_dna):
-                self.bmp_dna[j][i] = round(round(self.bmp_dna[j][i] / 255 * (self.gray_depth - 1)) * 255 /
+            for i in range(self.size_dna):
+                self.bmp_dna[j][i] = round(round((float(self.bmp_dna[j][i] / 255)) * (self.gray_depth - 1)) * 255 /
                                            (self.gray_depth - 1))
         self.bmp_dna = self.bmp_dna.astype(np.uint8)
 
@@ -65,17 +64,17 @@ class Bitmap:
         return False
 
     def _normalize_gray(self):
-        vmin = self.bmp_dna[0][0]
-        vmax = self.bmp_dna[0][0]
+        v_min = self.bmp_dna[0][0]
+        v_max = self.bmp_dna[0][0]
         for j in range(self.size_dna):
             for i in range(self.size_dna):
                 if self._need_exclude_norm(i, j):
                     continue
-                if self.bmp_dna[j][i] < vmin:
-                    vmin = self.bmp_dna[j][i]
-                if self.bmp_dna[j][i] > vmax:
-                    vmax = self.bmp_dna[j][i]
-        if vmin == vmax:
+                if self.bmp_dna[j][i] < v_min:
+                    v_min = self.bmp_dna[j][i]
+                if self.bmp_dna[j][i] > v_max:
+                    v_max = self.bmp_dna[j][i]
+        if v_min == v_max:
             for j in range(self.size_dna):
                 for i in range(self.size_dna):
                     self.bmp_dna[j][i] = 0
@@ -84,7 +83,7 @@ class Bitmap:
             for i in range(self.size_dna):
                 if self._need_exclude_norm(i, j):
                     continue
-                self.bmp_dna[j][i] = (self.bmp_dna[j][i] - vmin) * 255 / (vmax - vmin)
+                self.bmp_dna[j][i] = (self.bmp_dna[j][i] - v_min) * 255 / (v_max - v_min)
 
     def _merge_rotation(self):
         c = 1
@@ -125,21 +124,21 @@ class Bitmap:
             self._set_alpha_rotation(im)
         im.save(path)
 
-    def _write_rotated_text(self, f, hex=False):
+    def _write_rotated_text(self, f, is_hex=False):
         size_half = int(self.size_dna / 2)
         c = 1
         for j in range(size_half):
             for i in range(j, self.size_dna - c):
-                f.write(("%02x " if hex else "%d ") % self.bmp_dna[j][i])
+                f.write(("%02x " if is_hex else "%d ") % self.bmp_dna[j][i])
             c += 1
             f.write('\n')
         if self.size_dna % 2 == 1:
-            f.write(("%02x\n" if hex else "%d\n") % self.bmp_dna[size_half][size_half])
+            f.write(("%02x\n" if is_hex else "%d\n") % self.bmp_dna[size_half][size_half])
 
-    def save_dna_text(self, path, hex=False):
+    def save_dna_text(self, path, is_hex=False):
         f = open(path, 'w')
         if self.rotation:
-            self._write_rotated_text(f, hex)
+            self._write_rotated_text(f, is_hex)
         else:
             if hex:
                 np.savetxt(f, self.bmp_dna, '%02x')

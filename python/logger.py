@@ -1,7 +1,8 @@
 import logging
 
+
 def init(prog):
-    global      logger
+    global logger
 
     # 
     log_path = None
@@ -19,17 +20,19 @@ def init(prog):
     logger.setLevel(level)
 
 def info(str):
-    global      logger
+    global logger
     logger.info(str)
 
 def debug(str):
-    global      logger
+    global logger
     logger.debug(str)
 
+
 def warn(str):
-    global      logger
-    logger.warn(str)
+    global logger
+    logger.warning(str)
+
 
 def error(str):
-    global      logger
+    global logger
     logger.error(str)
