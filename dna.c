@@ -1,5 +1,6 @@
 #include "config.h"
 
+#include <stdio.h>
 #include <math.h>
 #include <stdlib.h>
 
@@ -105,8 +106,8 @@ rotate_avg_bmp(xbmp_t *abmp)
 	int	w, h;
 
 	pixel = pixels = malloc(get_n_nabla_pixels(size) * sizeof(float));
-	for (h = 0; h < size / 2; h++) {
-		for (w = h; w < size - h; w++) {
+	for (h = 0; h < (size + 1) / 2; h++) {
+		for (w = h; w < size - h - 1 || (w == h && w == (size + 1) / 2 - 1 && size % 2); w++) {
 			float	merged;
 
 			merged = abmp->pixels[h * size + w];
