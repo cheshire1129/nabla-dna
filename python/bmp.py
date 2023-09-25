@@ -3,30 +3,6 @@ import numpy as np
 import math
 
 
-def _get_intensity_sum(bmp, fws: float, fwe: float, fhs: float, fhe: float) -> float:
-    intensity_sum = 0
-
-    ws: int = int(math.floor(fws))
-    we: int = int(math.ceil(fwe))
-    hs: int = int(math.floor(fhs))
-    he: int = int(math.ceil(fhe))
-
-    for h in range(hs, he):
-        weight: float = 1
-        if h == hs:
-            weight *= (1 - (fhs - hs))
-        elif h == he - 1:
-            weight *= (fhe - (he - 1))
-
-        for w in range(ws, we):
-            weight_cur: float = weight
-
-            if w == ws:
-                weight_cur = weight * (1 - (fws - ws))
-            elif w == we - 1:
-                weight_cur = weight * (fwe - (we - 1))
-            intensity_sum += bmp[h][w] * weight_cur
-    return intensity_sum
 
 
 class Bitmap:
@@ -35,10 +11,12 @@ class Bitmap:
         self.gray_depth = gray_depth
         self.rotation = rotation
         self.bmp_dna = None
+        self.width = 0
+        self.height = 0
         if self.size_dna > 0:
             self.bmp_dna = np.ndarray((size_dna, size_dna))
 
-    def build_dna_bitmap(self, path, norm_gray=False):
+    def _load_grayscale_bmp(self, path):
         img = Image.open(path)
         arr_img = np.array(img)
         if arr_img.shape[2] == 3:
@@ -50,14 +28,53 @@ class Bitmap:
         g = g.reshape(g.shape[:2])
         b = b.reshape(b.shape[:2])
 
-        bmp = list(map(lambda x: 0.299 * x[0] + 0.587 * x[1] + 0.114 * x[2], zip(r, g, b)))
-        bmp_unit_w = arr_img.shape[1] / (self.size_dna + 1)
-        bmp_unit_h = arr_img.shape[0] / (self.size_dna + 1)
+        self.width = arr_img.shape[1]
+        self.height = arr_img.shape[0]
+        self.bmp_dna = list(map(lambda x: 0.299 * x[0] + 0.587 * x[1] + 0.114 * x[2], zip(r, g, b)))
 
-        for j in range(self.size_dna):
-            for i in range(self.size_dna):
-                self.bmp_dna[j][i] = _get_intensity_sum(bmp, bmp_unit_w * i, bmp_unit_w * (i + 1), bmp_unit_h * j,
-                                                        bmp_unit_h * (j + 1)) / (bmp_unit_w * bmp_unit_h)
+    def _get_intensity_sum(self, fws: float, fwe: float, fhs: float, fhe: float) -> float:
+        intensity_sum = 0
+
+        ws: int = int(math.floor(fws))
+        we: int = int(math.ceil(fwe))
+        hs: int = int(math.floor(fhs))
+        he: int = int(math.ceil(fhe))
+
+        for h in range(hs, he):
+            weight: float = 1
+            if h == hs:
+                weight *= (1 - (fhs - hs))
+            elif h == he - 1:
+                weight *= (fhe - (he - 1))
+
+            for w in range(ws, we):
+                weight_cur: float = weight
+
+                if w == ws:
+                    weight_cur = weight * (1 - (fws - ws))
+                elif w == we - 1:
+                    weight_cur = weight * (fwe - (we - 1))
+                intensity_sum += self.bmp_dna[h][w] * weight_cur
+        return intensity_sum
+
+    def _convert_averaged_bmp(self):
+        bmp_avg = np.ndarray([self.size_dna, self.size_dna])
+        bmp_unit_w = self.width / self.size_dna
+        bmp_unit_h = self.height / self.size_dna
+
+        for h in range(self.size_dna):
+            for w in range(self.size_dna):
+                bmp_avg[h][w] = self._get_intensity_sum(bmp_unit_w * w, bmp_unit_w * (w + 1), bmp_unit_h * h,
+                                                        bmp_unit_h * (h + 1)) / (bmp_unit_w * bmp_unit_h)
+        self.bmp_dna = bmp_avg
+
+    def build_dna_bitmap(self, path, norm_gray=False):
+        self._load_grayscale_bmp(path)
+        bmp_unit_w = self.width / (self.size_dna + 1)
+        bmp_unit_h = self.height / (self.size_dna + 1)
+
+        self._convert_averaged_bmp()
+
         if self.rotation:
             self._merge_rotation()
         if norm_gray:
@@ -69,52 +86,32 @@ class Bitmap:
                                            (self.gray_depth - 1))
         self.bmp_dna = self.bmp_dna.astype(np.uint8)
 
-    def _need_exclude_norm(self, i, j):
-        if not self.rotation:
-            return False
-        size_half = int(self.size_dna / 2)
-        is_odd_size = True if self.size_dna % 2 else False
-        if j > size_half:
-            return True
-        if j == size_half:
-            return False if is_odd_size and i == size_half else True
-        if i < j:
-            return True
-        if i >= self.size_dna - 1 - j:
-            return True
-        return False
-
     def _normalize_gray(self):
-        v_min = self.bmp_dna[0][0]
-        v_max = self.bmp_dna[0][0]
-        for j in range(self.size_dna):
-            for i in range(self.size_dna):
-                if self._need_exclude_norm(i, j):
-                    continue
-                if self.bmp_dna[j][i] < v_min:
-                    v_min = self.bmp_dna[j][i]
-                if self.bmp_dna[j][i] > v_max:
-                    v_max = self.bmp_dna[j][i]
+        v_max = v_min = self.bmp_dna[0]
+        for i in range(self.size_dna):
+            if self.bmp_dna[i] < v_min:
+                v_min = self.bmp_dna[i]
+            if self.bmp_dna[i] > v_max:
+                v_max = self.bmp_dna[i]
         if v_min == v_max:
-            for j in range(self.size_dna):
-                for i in range(self.size_dna):
-                    self.bmp_dna[j][i] = 0
+            self.bmp_dna[i] = 0
             return
-        for j in range(self.size_dna):
-            for i in range(self.size_dna):
-                if self._need_exclude_norm(i, j):
-                    continue
-                self.bmp_dna[j][i] = (self.bmp_dna[j][i] - v_min) * 255 / (v_max - v_min)
+        for i in range(self.size_dna):
+            self.bmp_dna[i] = (self.bmp_dna[i] - v_min) * 255 / (v_max - v_min)
 
     def _merge_rotation(self):
-        c = 1
-        for j in range(int(self.size_dna / 2)):
-            for i in range(j, self.size_dna - c):
-                self.bmp_dna[j][i] += self.bmp_dna[self.size_dna - 1 - i][j]                        # 90 degree
-                self.bmp_dna[j][i] += self.bmp_dna[self.size_dna - 1 - j][self.size_dna - 1 - i]    # 180
-                self.bmp_dna[j][i] += self.bmp_dna[i][self.size_dna - 1 - j]                        # -90
-                self.bmp_dna[j][i] /= 4
-            c += 1
+        bmp_rot = []
+        for h in range(int((self.size_dna + 1) / 2)):
+            for w in range(h, self.size_dna - h):
+                if (w >= self.size_dna - h - 1 and
+                        (w != h or w != (self.size_dna + 1) / 2 - 1 or self.size_dna % 1 != 0)):
+                    break
+                self.bmp_dna[h][w] += self.bmp_dna[self.size_dna - 1 - w][h]                        # 90 degree
+                self.bmp_dna[h][w] += self.bmp_dna[self.size_dna - 1 - h][self.size_dna - 1 - w]    # 180
+                self.bmp_dna[h][w] += self.bmp_dna[w][self.size_dna - 1 - h]                        # -90
+                self.bmp_dna[h][w] /= 4
+                bmp_rot.append(self.bmp_dna[h][w])
+        self.bmp_dna = bmp_rot
 
     def load_dna_bitmap(self, path):
         img = Image.open(path)
@@ -167,6 +164,28 @@ class Bitmap:
                 np.savetxt(f, self.bmp_dna, '%3d')
         f.close()
 
+    def show_bitmap(self, path, averaged: bool):
+        self._load_grayscale_bmp(path)
+        if averaged:
+            self._convert_averaged_bmp()
+            height = width = self.size_dna
+        else:
+            width = self.width
+            height = self.height
+
+        for h in range(height):
+            for w in range(width):
+                print("%.2f " % float(self.bmp_dna[h][w]), end='')
+            print()
+
+    def show_bitmap_rotated(self, path):
+        self._load_grayscale_bmp(path)
+        self._convert_averaged_bmp()
+        self._merge_rotation()
+        for f in self.bmp_dna:
+            print("%.2f " % f, end='')
+        print()
+
     def show_dna_text(self):
         size_half = int(self.size_dna / 2)
         c = 1
@@ -177,7 +196,6 @@ class Bitmap:
             print()
         if self.size_dna % 2 == 1:
             print("%d\n" % int(self.bmp_dna[size_half][size_half]), end='')
-
 
     def get_dna(self):
         return self.bmp_dna.reshape(-1)
