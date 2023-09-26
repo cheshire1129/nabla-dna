@@ -5,13 +5,7 @@
 #include <stdlib.h>
 
 #include "ibmp.h"
-#include "nabla_dna.h"
-
-/* averaged bitmap or nabla bitmap */
-typedef struct {
-	int	size;
-	float	*pixels;
-} xbmp_t;
+#include "xbmp.h"
 
 static float
 get_intensity_sum(ibmp_t *pbmp, float fws, float fwe, float fhs, float fhe)
@@ -123,80 +117,66 @@ rotate_avg_bmp(xbmp_t *abmp)
 	return true;
 }
 
-static dnabla_t *
-normalize_nabla_bmp(xbmp_t *nbmp)
+static bool
+normalize_bmp(xbmp_t *rbmp)
 {
-	dnabla_t	*dnabla;
+	float	*pixels;
 	float	vmin, vmax;
-	int	n_pixels = get_n_nabla_pixels(nbmp->size);
+	int	n_pixels = get_n_nabla_pixels(rbmp->size);
 	int	i;
 
-	dnabla = (dnabla_t *)malloc(sizeof(dnabla_t));
-	if (dnabla == NULL)
+	pixels = (float *)malloc(n_pixels * sizeof(int));
+	if (pixels == NULL)
 		return NULL;
-	dnabla->pixels = (int *)malloc(n_pixels * sizeof(int));
-	if (dnabla->pixels == NULL) {
-		free(dnabla);
-		return NULL;
-	}
 
-	dnabla->size = nbmp->size;
-
-	vmax = vmin = nbmp->pixels[0];
+	vmax = vmin = rbmp->pixels[0];
 	for (i = 1; i < n_pixels; i++) {
-		if (nbmp->pixels[i] < vmin)
-			vmin = nbmp->pixels[i];
-		else if (nbmp->pixels[i] > vmax)
-			vmax = nbmp->pixels[i];
+		if (rbmp->pixels[i] < vmin)
+			vmin = pixels[i];
+		else if (rbmp->pixels[i] > vmax)
+			vmax = pixels[i];
 	}
 	if (vmin == vmax) {
 		for (i = 0; i < n_pixels; i++)
-			dnabla->pixels[i] = 0;
+			pixels[i] = 0;
 	}
 	else {
 		for (i = 0; i < n_pixels; i++)
-			dnabla->pixels[i] = (int)round((nbmp->pixels[i] - vmin) * 255 / (vmax - vmin));
+			pixels[i] = (rbmp->pixels[i] - vmin) * 255 / (vmax - vmin);
 	}
 
-	return dnabla;
-}
+	free(rbmp->pixels);
+	rbmp->pixels = pixels;
 
-static void
-free_xbmp(xbmp_t *abmp)
-{
-	if (abmp == NULL)
-		return;
-	if (abmp->pixels)
-		free(abmp->pixels);
-	free(abmp);
-}
-
-dnabla_t *
-build_nabla_dna(ibmp_t *ibmp, int dna_size)
-{
-	xbmp_t	*abmp;
-	dnabla_t	*dnabla;
-
-	abmp = build_avg_bmp(ibmp, dna_size);
-	if (abmp == NULL)
-		return false;
-	if (!rotate_avg_bmp(abmp)) {
-		free_xbmp(abmp);
-		return NULL;
-	}
-
-	dnabla = normalize_nabla_bmp(abmp);
-	free_xbmp(abmp);
-
-	return dnabla;
+	return true;
 }
 
 void
-free_dnabla(dnabla_t *dnabla)
+free_xbmp(xbmp_t *xbmp)
 {
-	if (dnabla == NULL)
+	if (xbmp == NULL)
 		return;
-	if (dnabla->pixels)
-		free(dnabla->pixels);
-	free(dnabla);
+	if (xbmp->pixels)
+		free(xbmp->pixels);
+	free(xbmp);
+}
+
+xbmp_t *
+build_nabla_bmp(ibmp_t *ibmp, int dna_size)
+{
+	xbmp_t	*xbmp;
+
+	xbmp = build_avg_bmp(ibmp, dna_size);
+	if (xbmp == NULL)
+		return NULL;
+	if (!rotate_avg_bmp(xbmp)) {
+		free_xbmp(xbmp);
+		return NULL;
+	}
+
+	if (!normalize_bmp(xbmp)) {
+		free_xbmp(xbmp);
+		return NULL;
+	}
+	return xbmp;
 }

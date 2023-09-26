@@ -75,12 +75,13 @@ static void
 save_dnabla(FILE *fp, dnabla_t *dnabla)
 {
 	int	i;
-	int	*p, n_pixels;
+	uint8_t	*p;
+	int	n_pixels;
 
 	p = dnabla->pixels;
 	n_pixels = get_n_nabla_pixels(dnabla->size);
 	for (i = 0; i < n_pixels; i++, p++) {
-		fprintf(fp, "%3u ", *p);
+		fprintf(fp, "%3hhu ", *p);
 	}
 	fprintf(fp, "\n");
 }

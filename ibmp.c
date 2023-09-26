@@ -2,20 +2,9 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <stdint.h>
 
 #include "ibmp.h"
-
-#ifndef uint8_t
-typedef unsigned char	uint8_t;
-#endif
-
-#ifndef uint16_t
-typedef unsigned short	uint16_t;
-#endif
-
-#ifndef uint32_t
-typedef unsigned int	uint32_t;
-#endif
 
 typedef struct __attribute__((packed)) {
 	uint8_t		magic[2];	/* the magic number used to identify the BMP file:
