@@ -80,11 +80,9 @@ class Bitmap:
         if norm_gray:
             self._normalize_gray()
 
-        for j in range(self.size_dna):
-            for i in range(self.size_dna):
-                self.bmp_dna[j][i] = round(round((float(self.bmp_dna[j][i] / 255)) * (self.gray_depth - 1)) * 255 /
-                                           (self.gray_depth - 1))
-        self.bmp_dna = self.bmp_dna.astype(np.uint8)
+        for i in range(len(self.bmp_dna)):
+            self.bmp_dna[i] = int(round(round((float(self.bmp_dna[i] / 255)) * (self.gray_depth - 1)) * 255 /
+                                        (self.gray_depth - 1)))
 
     def _normalize_gray(self):
         v_max = v_min = self.bmp_dna[0]
@@ -96,7 +94,7 @@ class Bitmap:
         if v_min == v_max:
             self.bmp_dna[i] = 0
             return
-        for i in range(self.size_dna):
+        for i in range(len(self.bmp_dna)):
             self.bmp_dna[i] = (self.bmp_dna[i] - v_min) * 255 / (v_max - v_min)
 
     def _merge_rotation(self):
@@ -147,11 +145,11 @@ class Bitmap:
         c = 1
         for j in range(size_half):
             for i in range(j, self.size_dna - c):
-                f.write(("%02x " if is_hex else "%d ") % self.bmp_dna[j][i])
+                f.write(("%02x " if is_hex else "%d ") % self.bmp_dna[c - 1])
             c += 1
             f.write('\n')
         if self.size_dna % 2 == 1:
-            f.write(("%02x\n" if is_hex else "%d\n") % self.bmp_dna[size_half][size_half])
+            f.write(("%02x\n" if is_hex else "%d\n") % self.bmp_dna[c])
 
     def save_dna_text(self, path, is_hex=False):
         f = open(path, 'w')
@@ -191,11 +189,11 @@ class Bitmap:
         c = 1
         for j in range(size_half):
             for i in range(j, self.size_dna - c):
-                print("%d " % int(self.bmp_dna[j][i]), end='')
+                print("%d " % int(self.bmp_dna[c - 1]), end='')
             c += 1
             print()
         if self.size_dna % 2 == 1:
-            print("%d\n" % int(self.bmp_dna[size_half][size_half]), end='')
+            print("%d\n" % int(self.bmp_dna[c]), end='')
 
     def get_dna(self):
         return self.bmp_dna.reshape(-1)
