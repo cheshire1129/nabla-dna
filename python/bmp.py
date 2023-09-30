@@ -3,8 +3,6 @@ import numpy as np
 import math
 
 
-
-
 class Bitmap:
     def __init__(self, size_dna=0, gray_depth=256, rotation=False):
         self.size_dna = size_dna
