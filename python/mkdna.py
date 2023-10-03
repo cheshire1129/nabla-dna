@@ -56,8 +56,6 @@ def _mkdna_folder(path):
         if not os.path.isfile(os.path.join(path, item)):
             continue
         name, ext = os.path.splitext(item)
-        if ext != ".bmp":
-            continue
         path_out = os.path.join(out_dir, name + out_ext)
         _mkdna(os.path.join(path, item), path_out)
 
