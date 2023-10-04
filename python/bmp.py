@@ -144,15 +144,9 @@ class Bitmap:
         im.save(path)
 
     def _write_rotated_text(self, f, is_hex=False):
-        size_half = int(self.size_dna / 2)
-        c = 1
-        for j in range(size_half):
-            for i in range(j, self.size_dna - c):
-                f.write(("%02x " if is_hex else "%d ") % self.bmp_dna[c - 1])
-            c += 1
-            f.write('\n')
-        if self.size_dna % 2 == 1:
-            f.write(("%02x\n" if is_hex else "%d\n") % self.bmp_dna[c])
+        for i in range(len(self.bmp_dna)):
+            f.write(("%02x " if is_hex else "%d ") % self.bmp_dna[i])
+        f.write('\n')
 
     def save_dna_text(self, path, is_hex=False):
         f = open(path, 'w')
@@ -188,15 +182,9 @@ class Bitmap:
         print()
 
     def show_dna_text(self):
-        size_half = int(self.size_dna / 2)
-        c = 1
-        for j in range(size_half):
-            for i in range(j, self.size_dna - c):
-                print("%d " % int(self.bmp_dna[c - 1]), end='')
-            c += 1
-            print()
-        if self.size_dna % 2 == 1:
-            print("%d\n" % int(self.bmp_dna[c]), end='')
+        for i in range(len(self.bmp_dna)):
+            print("%d " % int(self.bmp_dna[i]), end='')
+        print()
 
     def get_dna(self):
         return self.bmp_dna.reshape(-1)
