@@ -13,6 +13,7 @@ DNA_SIZE_DEFAULT = 4
 path_in: str = ''
 path_comp: str = ''
 dist_type: str = 'similarity'
+depth: int = 256
 is_pis: bool = False
 
 
@@ -21,6 +22,8 @@ def _usage_getdist():
 Usage: getdist.py [<options>] <image path> <image path or dir>
    <options>
    -h: help(this message)
+   -d <depth>: bitmap depth(default: 256)
+      allowed values: 2, 4, 8, 16, 32, 64, 128, 256
    -t <type>: distance type
       similarity(default): cosine similarity
       c-similarity(default): center weighted cosine similarity
@@ -30,7 +33,7 @@ Usage: getdist.py [<options>] <image path> <image path or dir>
 
 
 def _getdist(path_compared) -> float:
-    global path_in, is_pis
+    global path_in, is_pis, depth
 
     if is_pis:
         pis1 = PIS()
@@ -46,7 +49,7 @@ def _getdist(path_compared) -> float:
         bmp2.load_dna_bitmap(path_compared)
         dna1 = bmp1.get_dna()
         dna2 = bmp2.get_dna()
-    return dist.get(dist_type, dna1, dna2)
+    return dist.get(dist_type, dna1, dna2, depth)
 
 
 def _getdist_one(path_compared: str):
@@ -70,10 +73,10 @@ def _getdist_folder(path_comp_dir):
 
 
 def _parse_args():
-    global path_in, path_comp, dist_type, is_pis
+    global path_in, path_comp, dist_type, depth, is_pis
 
     try:
-        opts, args = getopt.getopt(sys.argv[1:], "ht:")
+        opts, args = getopt.getopt(sys.argv[1:], "hd:t:")
     except getopt.GetoptError:
         logger.error("invalid option")
         _usage_getdist()
@@ -82,6 +85,8 @@ def _parse_args():
         if o == '-h':
             _usage_getdist()
             exit(0)
+        elif o == '-d':
+            depth = int(a)
         elif o == '-t':
             dist_type = a
 

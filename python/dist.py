@@ -44,17 +44,17 @@ def _get_resolution(dna):
         reshalf += 1
 
 
-def get(type, dna1, dna2):
+def get(dist_type, dna1, dna2, depth: int):
     dna1 = dna1.astype(np.float32)
     dna2 = dna2.astype(np.float32)
-    dna1 = (dna1 - 127) / 128
-    dna2 = (dna2 - 127) / 128
-    if type == 'similarity':
+    dna1 = dna1 - (depth - 1) / 2
+    dna2 = dna2 - (depth - 1) / 2
+    if dist_type == 'similarity':
         return _get_similarity(dna1, dna2)
-    elif type == 'c-similarity':
+    elif dist_type == 'c-similarity':
         weights = _get_center_weights(_get_resolution(dna1))
         return _get_similarity(dna1, dna2, weights)
-    elif type == "cosine":
+    elif dist_type == "cosine":
         return _get_cosine(dna1, dna2)
-    elif type == "euclidean":
+    elif dist_type == "euclidean":
         return _get_euclidean(dna1, dna2)
