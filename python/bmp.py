@@ -119,28 +119,21 @@ class Bitmap:
         self.bmp_dna = np.array(img)
         self.size_dna = self.bmp_dna.shape[0]
 
-    @staticmethod
-    def _mark_pixel_shown(im, i, j):
-        pixel = im.getpixel((i, j))
-        pixel = (pixel[0], 255)
-        im.putpixel((i, j), pixel)
-
-    def _set_alpha_rotation(self, im):
-        im.convert("LA")
+    def _save_nabla_bitmap(self, im):
         im.putalpha(0)
-        size_half = int(self.size_dna / 2)
-        c = 1
-        for j in range(size_half):
-            for i in range(j, self.size_dna - c):
-                self._mark_pixel_shown(im, i, j)
-            c += 1
-        if self.size_dna % 2 == 1:
-            self._mark_pixel_shown(im, size_half, size_half)
+        i = 0
+        for h in range(int((self.size_dna + 1) / 2)):
+            for w in range(h, self.size_dna - h):
+                if (w >= self.size_dna - h - 1 and
+                        (w != h or w != (self.size_dna + 1) / 2 - 1 or self.size_dna % 1 != 0)):
+                    break
+                im.putpixel((w, h), (self.bmp_dna[i], 255))
+                i += 1
 
     def save_dna_bitmap(self, path):
-        im = Image.fromarray(self.bmp_dna, "L")
+        im = Image.new("LA", (self.size_dna, self.size_dna), 255)
         if self.rotation:
-            self._set_alpha_rotation(im)
+            self._save_nabla_bitmap(im)
         im.save(path)
 
     def _write_rotated_text(self, f, is_hex=False):
