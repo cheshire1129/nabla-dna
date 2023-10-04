@@ -126,7 +126,7 @@ class Bitmap:
                 if (w >= self.size_dna - h - 1 and
                         (w != h or w != (self.size_dna + 1) / 2 - 1 or self.size_dna % 1 != 0)):
                     break
-                im.putpixel((w, h), (self.bmp_dna[i], 255))
+                im.putpixel((w, h), (int(self.bmp_dna[i] * 256 / self.gray_depth), 255))
                 i += 1
 
     def save_dna_bitmap(self, path):
