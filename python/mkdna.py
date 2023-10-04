@@ -11,7 +11,7 @@ DNA_SIZE_DEFAULT = 4
 path_input: str = ""
 path_output: str = ""
 dna_size = DNA_SIZE_DEFAULT
-gray_depth = 256
+depth: int = 256
 norm_gray = False
 rotation = False
 
@@ -22,8 +22,7 @@ Usage: mkdna.py [<options>] <image path or folder>
    <options>
    -h: help(this message)
    -s <size>: dna size (default: 4)
-   -g <depth>: gray depth(default: 256)
-      allowed values: 2, 4, 8, 16, 32, 64, 128, 256
+   -d <depth>: gray depth bit(default and max: 8)
    -n: normalize gray(default: false)
    -r: get rotational dna
    -o <output>: save dna as an image or text
@@ -31,9 +30,9 @@ Usage: mkdna.py [<options>] <image path or folder>
 
 
 def _mkdna(path, path_out):
-    global dna_size, gray_depth, rotation, norm_gray
+    global dna_size, depth, rotation, norm_gray
 
-    bmp = Bitmap(dna_size, gray_depth, rotation)
+    bmp = Bitmap(dna_size, depth, rotation)
     bmp.build_dna_bitmap(path, norm_gray)
     if path_out:
         res = os.path.splitext(path_out)
@@ -48,7 +47,7 @@ def _mkdna(path, path_out):
 
 
 def _mkdna_folder(path):
-    global path_output, gray_depth, rotation, norm_gray
+    global path_output, depth, rotation, norm_gray
 
     out_ext = os.path.splitext(os.path.basename(path_output))[1]
     out_dir = os.path.dirname(path_output)
@@ -62,10 +61,10 @@ def _mkdna_folder(path):
 
 
 def _parse_args():
-    global path_input, path_output, dna_size, gray_depth, norm_gray, rotation
+    global path_input, path_output, dna_size, depth, norm_gray, rotation
 
     try:
-        opts, args = getopt.getopt(sys.argv[1:], "o:s:g:nrh")
+        opts, args = getopt.getopt(sys.argv[1:], "o:s:d:nrh")
     except getopt.GetoptError:
         logger.error("invalid option")
         _usage_mkdna()
@@ -78,8 +77,8 @@ def _parse_args():
             path_output = a
         elif o == '-s':
             dna_size = int(a)
-        elif o == '-g':
-            gray_depth = int(a)
+        elif o == '-d':
+            depth = 2 ** int(a)
         elif o == '-n':
             norm_gray = True
         elif o == '-r':

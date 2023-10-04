@@ -22,8 +22,7 @@ def _usage_getdist():
 Usage: getdist.py [<options>] <image path> <image path or dir>
    <options>
    -h: help(this message)
-   -d <depth>: bitmap depth(default: 256)
-      allowed values: 2, 4, 8, 16, 32, 64, 128, 256
+   -d <depth>: bitmap depth bit(default and max: 8)
    -t <type>: distance type
       similarity(default): cosine similarity
       c-similarity(default): center weighted cosine similarity
@@ -86,7 +85,7 @@ def _parse_args():
             _usage_getdist()
             exit(0)
         elif o == '-d':
-            depth = int(a)
+            depth = 2 ** int(a)
         elif o == '-t':
             dist_type = a
 
