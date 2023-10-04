@@ -38,6 +38,11 @@ class Bitmap:
         hs: int = int(math.floor(fhs))
         he: int = int(math.ceil(fhe))
 
+        # following cases can occur due to floating point error
+        if we >= self.width:
+            we -= 1
+        if he >= self.height:
+            he -= 1
         for h in range(hs, he):
             weight: float = 1
             if h == hs:
