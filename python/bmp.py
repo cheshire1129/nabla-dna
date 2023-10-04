@@ -84,12 +84,11 @@ class Bitmap:
             self._normalize_gray()
 
         for i in range(len(self.bmp_dna)):
-            self.bmp_dna[i] = int(round(round((float(self.bmp_dna[i] / 255)) * (self.gray_depth - 1)) * 255 /
-                                        (self.gray_depth - 1)))
+            self.bmp_dna[i] = round(self.bmp_dna[i] / 255 * (self.gray_depth - 1))
 
     def _normalize_gray(self):
         v_max = v_min = self.bmp_dna[0]
-        for i in range(self.size_dna):
+        for i in range(len(self.bmp_dna)):
             if self.bmp_dna[i] < v_min:
                 v_min = self.bmp_dna[i]
             if self.bmp_dna[i] > v_max:

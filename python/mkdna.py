@@ -23,6 +23,7 @@ Usage: mkdna.py [<options>] <image path or folder>
    -h: help(this message)
    -s <size>: dna size (default: 4)
    -g <depth>: gray depth(default: 256)
+      allowed values: 2, 4, 8, 16, 32, 64, 128, 256
    -n: normalize gray(default: false)
    -r: get rotational dna
    -o <output>: save dna as an image or text
