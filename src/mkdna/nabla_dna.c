@@ -6,7 +6,7 @@
 #include "xbmp.h"
 #include "nabla_dna.h"
 
-static int *
+static uint8_t *
 get_quantized_bmp(xbmp_t *nbmp)
 {
 	uint8_t	*pixels;
