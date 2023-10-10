@@ -80,6 +80,8 @@ class Bitmap:
 
         if self.rotation:
             self._merge_rotation()
+        else:
+            self._vectorize()
         if norm_gray:
             self._normalize_gray()
 
@@ -113,6 +115,13 @@ class Bitmap:
                 bmp_rot.append(self.bmp_dna[h][w])
         self.bmp_dna = bmp_rot
 
+    def _vectorize(self):
+        bmp_vec = []
+        for h in range(self.size_dna):
+            for w in range(self.size_dna):
+                bmp_vec.append(self.bmp_dna[h][w])
+        self.bmp_dna = bmp_vec
+
     def load_dna_bitmap(self, path):
         img = Image.open(path)
         self.bmp_dna = np.array(img)
@@ -145,7 +154,7 @@ class Bitmap:
         if self.rotation:
             self._write_rotated_text(f, is_hex)
         else:
-            if hex:
+            if is_hex:
                 np.savetxt(f, self.bmp_dna, '%02x')
             else:
                 np.savetxt(f, self.bmp_dna, '%3d')
