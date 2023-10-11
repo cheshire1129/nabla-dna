@@ -10,7 +10,7 @@ import dist
 path_in: str = ''
 path_comp: str = ''
 dist_type: str = 'similarity'
-depth: int = 256
+dna_depth: int = 0
 min_similarity: float = -100
 
 
@@ -21,7 +21,7 @@ Usage: getdist.py [<options>] <image path> <pis path or dir> or
    <options>
    -h: help(this message)
    -s <minimum similarity value>: only shows pairs with larger value
-   -d <depth>: bitmap depth bit(default and max: 8)
+   -d <DNA depth>: DNA depth. If not given and not guessed, depth 8 will be assumed
    -t <type>: distance type
       similarity(default): cosine similarity
       c-similarity(default): center weighted cosine similarity
@@ -31,16 +31,27 @@ Usage: getdist.py [<options>] <image path> <pis path or dir> or
 
 
 def _getdist(path_cur, path_compared) -> float:
-    global depth
+    global dna_depth
 
-    pis1 = PIS()
-    pis2 = PIS()
-    pis1.open(path_cur)
-    pis2.open(path_compared)
+    pis1 = PIS(path_cur)
+    pis2 = PIS(path_compared)
     dna1 = pis1.get_dna()
     dna2 = pis2.get_dna()
 
-    return dist.get(dist_type, dna1, dna2, depth)
+    if pis1.dna_resolution > 0 and pis2.dna_resolution > 0:
+        if pis1.dna_resolution != pis2.dna_resolution:
+            return None
+    if pis1.dna_depth > 0 and pis2.dna_depth > 0:
+        if pis1.dna_depth != pis2.dna_depth:
+            return None
+    if dna_depth == 0:
+        dna_depth = pis1.dna_depth
+        if dna_depth == 0:
+            dna_depth = pis2.dna_depth
+    if dna_depth == 0:
+        dna_depth = 8
+
+    return dist.get(dist_type, dna1, dna2, dna_depth)
 
 
 def _getdist_one(path_compared: str):
@@ -90,7 +101,7 @@ def _getdist_folder_all():
 
 
 def _parse_args():
-    global path_in, path_comp, dist_type, depth, min_similarity
+    global path_in, path_comp, dist_type, dna_depth, min_similarity
 
     try:
         opts, args = getopt.getopt(sys.argv[1:], "hs:d:t:")
@@ -103,7 +114,7 @@ def _parse_args():
             _usage_getdist()
             exit(0)
         elif o == '-d':
-            depth = 2 ** int(a)
+            dna_depth = int(a)
         elif o == '-t':
             dist_type = a
         elif o == '-s':

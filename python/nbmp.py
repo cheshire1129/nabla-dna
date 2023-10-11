@@ -1,12 +1,15 @@
 from PIL import Image
+
+import os
 import sys
 
 import abmp
 
 
 class NablaBitmap(abmp.AveragedBitmap):
-    def __init__(self, dna_resolution=0, gray_depth=256, skip_nabla_sum=False):
-        super().__init__(dna_resolution, gray_depth)
+    def __init__(self, dna_resolution=0, dna_depth=8, skip_nabla_sum=False):
+        super().__init__(dna_resolution, dna_depth)
+        self.dna_depth = dna_depth
         self.skip_nabla_sum = skip_nabla_sum
 
     def build_dna_bitmap(self, path, skip_normalization=False):
@@ -80,7 +83,9 @@ class NablaBitmap(abmp.AveragedBitmap):
         f.write('\n')
 
     def save_dna_text(self, path, is_hex=False):
-        f = open(path, 'w')
+        name_ext = os.path.splitext(path)
+        path_out = name_ext[0] + f".x{self.dna_resolution:02d}d{self.dna_depth}" + name_ext[1]
+        f = open(path_out, 'w')
         self._write_dna_string(f, is_hex)
         f.close()
 
