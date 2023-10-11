@@ -1,5 +1,4 @@
 import numpy as np
-from numpy.linalg import norm
 from scipy import spatial
 
 
@@ -18,10 +17,10 @@ def _get_euclidean(dna1, dna2):
 def _get_center_weights(res):
     weights = []
     if res % 2:
-        iter = range(2, res, 2)
+        iteration = range(2, res, 2)
     else:
-        iter = range(1, res, 2)
-    for i in reversed(iter):
+        iteration = range(1, res, 2)
+    for i in reversed(iteration):
         w = 1 / i
         for j in range(i):
             weights.append(w)

@@ -4,7 +4,6 @@ import sys
 import os
 import getopt
 import logger
-from bmp import Bitmap
 from pis import PIS
 import dist
 
@@ -12,14 +11,13 @@ path_in: str = ''
 path_comp: str = ''
 dist_type: str = 'similarity'
 depth: int = 256
-is_pis: bool = False
 min_similarity: float = -100
 
 
 def _usage_getdist():
     print("""\
-Usage: getdist.py [<options>] <image path> <image path or dir> or
-                              <image path>: get similarity of all pairs
+Usage: getdist.py [<options>] <image path> <pis path or dir> or
+                              <image path>: get similarity of all pis pairs
    <options>
    -h: help(this message)
    -s <minimum similarity value>: only shows pairs with larger value
@@ -33,22 +31,15 @@ Usage: getdist.py [<options>] <image path> <image path or dir> or
 
 
 def _getdist(path_cur, path_compared) -> float:
-    global is_pis, depth
+    global depth
 
-    if is_pis:
-        pis1 = PIS()
-        pis2 = PIS()
-        pis1.open(path_cur)
-        pis2.open(path_compared)
-        dna1 = pis1.get_dna()
-        dna2 = pis2.get_dna()
-    else:
-        bmp1 = Bitmap()
-        bmp2 = Bitmap()
-        bmp1.load_dna_bitmap(path_cur)
-        bmp2.load_dna_bitmap(path_compared)
-        dna1 = bmp1.get_dna()
-        dna2 = bmp2.get_dna()
+    pis1 = PIS()
+    pis2 = PIS()
+    pis1.open(path_cur)
+    pis2.open(path_compared)
+    dna1 = pis1.get_dna()
+    dna2 = pis2.get_dna()
+
     return dist.get(dist_type, dna1, dna2, depth)
 
 
@@ -99,7 +90,7 @@ def _getdist_folder_all():
 
 
 def _parse_args():
-    global path_in, path_comp, dist_type, depth, is_pis, min_similarity
+    global path_in, path_comp, dist_type, depth, min_similarity
 
     try:
         opts, args = getopt.getopt(sys.argv[1:], "hs:d:t:")
@@ -122,15 +113,7 @@ def _parse_args():
         logger.error("input images required")
         _usage_getdist()
         exit(1)
-    if len(args) == 1:
-        is_pis = True
-    else:
-        if PIS.is_pis_ext(args[0]) and (os.path.isdir(args[1]) or PIS.is_pis_ext(args[1])):
-            is_pis = True
-        elif ((PIS.is_pis_ext(args[0]) and os.path.isfile(args[1])) or
-              (os.path.isfile(args[1]) and PIS.is_pis_ext(args[1]))):
-            logger.error("Both files should be PIS or not")
-            exit(2)
+    if len(args) > 1:
         path_comp = args[1]
     path_in = args[0]
 

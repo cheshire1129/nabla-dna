@@ -57,11 +57,6 @@ class NablaBitmap(abmp.AveragedBitmap):
                 bmp_vec.append(self.bmp_dna[h][w])
         self.bmp_dna = bmp_vec
 
-    def load_dna_bitmap(self, path):
-        img = Image.open(path)
-        self.bmp_dna = np.array(img)
-        self.size_dna = self.bmp_dna.shape[0]
-
     def _save_nabla_bitmap(self, im):
         im.putalpha(0)
         i = 0
@@ -121,6 +116,3 @@ class NablaBitmap(abmp.AveragedBitmap):
         for i in range(len(self.bmp_dna)):
             print("%d " % int(self.bmp_dna[i]), end='')
         print()
-
-    def get_dna(self):
-        return self.bmp_dna.reshape(-1)
