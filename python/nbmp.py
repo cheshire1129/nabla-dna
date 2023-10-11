@@ -1,26 +1,26 @@
 from PIL import Image
-import numpy as np
+import sys
 
 import abmp
 
 
 class NablaBitmap(abmp.AveragedBitmap):
-    def __init__(self, size_dna=0, gray_depth=256, rotation=False):
-        super().__init__(size_dna, gray_depth)
-        self.rotation = rotation
+    def __init__(self, dna_resolution=0, gray_depth=256, skip_nabla_sum=False):
+        super().__init__(dna_resolution, gray_depth)
+        self.skip_nabla_sum = skip_nabla_sum
 
-    def build_dna_bitmap(self, path, norm_gray=False):
+    def build_dna_bitmap(self, path, skip_normalization=False):
         self.build_averaged_bitmap(path)
 
-        if self.rotation:
-            self._merge_rotation()
+        if not self.skip_nabla_sum:
+            self.do_nabla_sum()
         else:
             self._vectorize()
-        if norm_gray:
+        if not skip_normalization:
             self._normalize_gray()
 
         for i in range(len(self.bmp_dna)):
-            self.bmp_dna[i] = round(self.bmp_dna[i] / 255 * (self.gray_depth - 1))
+            self.bmp_dna[i] = int(round(self.bmp_dna[i] / 255 * (self.gray_depth - 1)))
 
     def _normalize_gray(self):
         v_max = v_min = self.bmp_dna[0]
@@ -36,83 +36,53 @@ class NablaBitmap(abmp.AveragedBitmap):
         for i in range(len(self.bmp_dna)):
             self.bmp_dna[i] = (self.bmp_dna[i] - v_min) * 255 / (v_max - v_min)
 
-    def _merge_rotation(self):
+    def do_nabla_sum(self):
         bmp_rot = []
-        for h in range(int((self.size_dna + 1) / 2)):
-            for w in range(h, self.size_dna - h):
-                if (w >= self.size_dna - h - 1 and
-                        (w != h or w != (self.size_dna + 1) / 2 - 1 or self.size_dna % 1 != 0)):
+        for h in range(int((self.dna_resolution + 1) / 2)):
+            for w in range(h, self.dna_resolution - h):
+                if (w >= self.dna_resolution - h - 1 and
+                        (w != h or w != (self.dna_resolution + 1) / 2 - 1 or self.dna_resolution % 1 != 0)):
                     break
-                self.bmp_dna[h][w] += self.bmp_dna[self.size_dna - 1 - w][h]                        # 90 degree
-                self.bmp_dna[h][w] += self.bmp_dna[self.size_dna - 1 - h][self.size_dna - 1 - w]    # 180
-                self.bmp_dna[h][w] += self.bmp_dna[w][self.size_dna - 1 - h]                        # -90
+                self.bmp_dna[h][w] += self.bmp_dna[self.dna_resolution - 1 - w][h]                        # 90 degree
+                self.bmp_dna[h][w] += self.bmp_dna[self.dna_resolution - 1 - h][self.dna_resolution - 1 - w]    # 180
+                self.bmp_dna[h][w] += self.bmp_dna[w][self.dna_resolution - 1 - h]                        # -90
                 self.bmp_dna[h][w] /= 4
                 bmp_rot.append(self.bmp_dna[h][w])
         self.bmp_dna = bmp_rot
 
     def _vectorize(self):
         bmp_vec = []
-        for h in range(self.size_dna):
-            for w in range(self.size_dna):
+        for h in range(self.dna_resolution):
+            for w in range(self.dna_resolution):
                 bmp_vec.append(self.bmp_dna[h][w])
         self.bmp_dna = bmp_vec
 
     def _save_nabla_bitmap(self, im):
         im.putalpha(0)
         i = 0
-        for h in range(int((self.size_dna + 1) / 2)):
-            for w in range(h, self.size_dna - h):
-                if (w >= self.size_dna - h - 1 and
-                        (w != h or w != (self.size_dna + 1) / 2 - 1 or self.size_dna % 1 != 0)):
+        for h in range(int((self.dna_resolution + 1) / 2)):
+            for w in range(h, self.dna_resolution - h):
+                if (w >= self.dna_resolution - h - 1 and
+                        (w != h or w != (self.dna_resolution + 1) / 2 - 1 or self.dna_resolution % 1 != 0)):
                     break
                 im.putpixel((w, h), (int(self.bmp_dna[i] * 256 / self.gray_depth), 255))
                 i += 1
 
     def save_dna_bitmap(self, path):
-        im = Image.new("LA", (self.size_dna, self.size_dna), 255)
-        if self.rotation:
+        im = Image.new("LA", (self.dna_resolution, self.dna_resolution), 255)
+        if not self.skip_nabla_sum:
             self._save_nabla_bitmap(im)
         im.save(path)
 
-    def _write_rotated_text(self, f, is_hex=False):
+    def _write_dna_string(self, f, is_hex=False):
         for i in range(len(self.bmp_dna)):
             f.write(("%02x " if is_hex else "%d ") % self.bmp_dna[i])
         f.write('\n')
 
     def save_dna_text(self, path, is_hex=False):
         f = open(path, 'w')
-        if self.rotation:
-            self._write_rotated_text(f, is_hex)
-        else:
-            if is_hex:
-                np.savetxt(f, self.bmp_dna, '%02x')
-            else:
-                np.savetxt(f, self.bmp_dna, '%3d')
+        self._write_dna_string(f, is_hex)
         f.close()
 
-    def show_bitmap(self, path, averaged: bool):
-        self._load_grayscale_bmp(path)
-        if averaged:
-            self._convert_averaged_bmp()
-            height = width = self.size_dna
-        else:
-            width = self.width
-            height = self.height
-
-        for h in range(height):
-            for w in range(width):
-                print("%.2f " % float(self.bmp_dna[h][w]), end='')
-            print()
-
-    def show_bitmap_rotated(self, path):
-        self._load_grayscale_bmp(path)
-        self._convert_averaged_bmp()
-        self._merge_rotation()
-        for f in self.bmp_dna:
-            print("%.2f " % f, end='')
-        print()
-
     def show_dna_text(self):
-        for i in range(len(self.bmp_dna)):
-            print("%d " % int(self.bmp_dna[i]), end='')
-        print()
+        self._write_dna_string(sys.stdout, False)

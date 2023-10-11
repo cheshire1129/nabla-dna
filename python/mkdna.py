@@ -6,14 +6,15 @@ import getopt
 import logger
 from nbmp import NablaBitmap
 
-DNA_SIZE_DEFAULT = 4
+DNA_RESOLUTION_DEFAULT = 4
+DNA_DEPTH_DEFAULT = 8
 
 path_input: str = ""
 path_output: str = ""
-dna_size = DNA_SIZE_DEFAULT
-depth: int = 256
-norm_gray = False
-rotation = False
+dna_resolution = DNA_RESOLUTION_DEFAULT
+dna_depth: int = 8
+skip_normalization = False
+skip_nabla_sum = False
 
 
 def _usage_mkdna():
@@ -21,19 +22,19 @@ def _usage_mkdna():
 Usage: mkdna.py [<options>] <image path or folder>
    <options>
    -h: help(this message)
-   -s <size>: dna size (default: 4)
-   -d <depth>: gray depth bit(default and max: 8)
-   -n: normalize gray(default: false)
-   -r: get rotational dna
+   -x <resolution>: DNA resolution (default: 4)
+   -d <depth>: DNA depth bit(default and max: 8)
+   -N: skip normalization
+   -S: skip nabla sum
    -o <output>: save dna as an image or text
 """)
 
 
 def _mkdna(path, path_out):
-    global dna_size, depth, rotation, norm_gray
+    global dna_resolution, dna_depth, skip_nabla_sum, skip_normalization
 
-    bmp = NablaBitmap(dna_size, depth, rotation)
-    bmp.build_dna_bitmap(path, norm_gray)
+    bmp = NablaBitmap(dna_resolution, dna_depth, skip_nabla_sum)
+    bmp.build_dna_bitmap(path, skip_normalization)
     if path_out:
         res = os.path.splitext(path_out)
         if res[1] == '.pis':
@@ -47,7 +48,7 @@ def _mkdna(path, path_out):
 
 
 def _mkdna_folder(path):
-    global path_output, depth, rotation, norm_gray
+    global path_output
 
     out_ext = os.path.splitext(os.path.basename(path_output))[1]
     out_dir = os.path.dirname(path_output)
@@ -61,10 +62,10 @@ def _mkdna_folder(path):
 
 
 def _parse_args():
-    global path_input, path_output, dna_size, depth, norm_gray, rotation
+    global path_input, path_output, dna_resolution, dna_depth, skip_nabla_sum, skip_normalization
 
     try:
-        opts, args = getopt.getopt(sys.argv[1:], "o:s:d:nrh")
+        opts, args = getopt.getopt(sys.argv[1:], "o:x:d:NSh")
     except getopt.GetoptError:
         logger.error("invalid option")
         _usage_mkdna()
@@ -75,14 +76,17 @@ def _parse_args():
             exit(0)
         elif o == '-o':
             path_output = a
-        elif o == '-s':
-            dna_size = int(a)
+        elif o == '-x':
+            dna_resolution = int(a)
         elif o == '-d':
-            depth = 2 ** int(a)
-        elif o == '-n':
-            norm_gray = True
-        elif o == '-r':
-            rotation = True
+            dna_depth = int(a)
+            if dna_depth < 1 or dna_depth > 8:
+                logger.error("DNA depth should be between 1 and 8")
+                exit(1)
+        elif o == '-N':
+            skip_normalization = True
+        elif o == '-S':
+            skip_nabla_sum = True
 
     if len(args) < 1:
         logger.error("input image required")

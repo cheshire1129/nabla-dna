@@ -4,19 +4,19 @@ import sys
 import getopt
 from enum import Enum
 import logger
-from bmp import Bitmap
+from nbmp import NablaBitmap
 
-DNA_SIZE_DEFAULT = 4
+DNA_RESOLUTION_DEFAULT = 4
 
 
 class Mode(Enum):
     ModeBitmap = 0
     ModeAverage = 1
-    ModeRotated = 2
+    ModeNabla = 2
 
 
 path_input: str = ""
-dna_size: int = DNA_SIZE_DEFAULT
+dna_resolution: int = DNA_RESOLUTION_DEFAULT
 mode: Mode = Mode.ModeBitmap
 
 def _usage_showbmp():
@@ -24,27 +24,43 @@ def _usage_showbmp():
 Usage: showbmp.py <image path>
    <options>
    -h: help(this message)
-   -s <dna size>: dna size (default: 4)
+   -x <resolution>: DNA resolution (default: 4)
    -a: show averaged bitmap
-   -r: show rotated bitmap
+   -n: show nabla bitmap
 """)
 
+def _show_bitmap_matrix(bmp: NablaBitmap):
+    for h in range(bmp.height):
+        for w in range(bmp.width):
+            print("%.2f " % float(bmp.bmp_dna[h][w]), end='')
+        print()
+
+def _show_bitmap_vector(bmp: NablaBitmap):
+    for f in bmp.bmp_dna:
+        print("%.2f " % f, end='')
+    print()
 
 def _showbmp():
-    global path_input, dna_size, mode
+    global path_input, dna_resolution, mode
 
-    bmp = Bitmap(dna_size)
-    if (mode == Mode.ModeRotated):
-        bmp.show_bitmap_rotated(path_input)
-    else:
-        bmp.show_bitmap(path_input, mode == Mode.ModeAverage)
+    bmp = NablaBitmap(dna_resolution)
+    bmp.load_grayscale_bmp(path_input)
+    if mode == Mode.ModeBitmap:
+        _show_bitmap_matrix(bmp)
+        return
+    bmp.convert_averaged_bmp()
+    if mode == Mode.ModeAverage:
+        _show_bitmap_matrix(bmp)
+        return
+    bmp.do_nabla_sum()
+    _show_bitmap_vector(bmp)
 
 
 def _parse_args():
-    global path_input, dna_size, mode
+    global path_input, dna_resolution, mode
 
     try:
-        opts, args = getopt.getopt(sys.argv[1:], "hs:ar")
+        opts, args = getopt.getopt(sys.argv[1:], "hx:an")
     except getopt.GetoptError:
         logger.error("invalid option")
         _usage_showbmp()
@@ -54,11 +70,11 @@ def _parse_args():
             _usage_showbmp()
             exit(0)
         elif o == '-s':
-            dna_size = int(a)
+            dna_resolution = int(a)
         elif o == '-a':
             mode = Mode.ModeAverage
-        elif o == '-r':
-            mode = Mode.ModeRotated
+        elif o == '-n':
+            mode = Mode.ModeNabla
 
     if len(args) < 1:
         logger.error("input image required")
