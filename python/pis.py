@@ -14,6 +14,9 @@ class PIS:
             self.open(path)
 
     def open(self, path):
+        if not self.is_pis_ext(path):
+            return False
+
         self.is_pix = self._is_pix_ext(path)
         self._guess_dna(path)
         f = open(path, 'r')
@@ -22,6 +25,8 @@ class PIS:
                 val = int(x, 16) if self.is_pix else int(x)
                 self.dna.append(val)
         f.close()
+
+        return True
 
     def get_dna(self):
         return np.array(self.dna)
