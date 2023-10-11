@@ -4,7 +4,7 @@ import sys
 import os
 import getopt
 import logger
-from bmp import Bitmap
+from nbmp import NablaBitmap
 
 DNA_SIZE_DEFAULT = 4
 
@@ -32,7 +32,7 @@ Usage: mkdna.py [<options>] <image path or folder>
 def _mkdna(path, path_out):
     global dna_size, depth, rotation, norm_gray
 
-    bmp = Bitmap(dna_size, depth, rotation)
+    bmp = NablaBitmap(dna_size, depth, rotation)
     bmp.build_dna_bitmap(path, norm_gray)
     if path_out:
         res = os.path.splitext(path_out)
