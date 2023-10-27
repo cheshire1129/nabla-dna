@@ -5,7 +5,9 @@ import os
 import getopt
 import logger
 from pis import PIS
+from hst import HST
 import dist
+import dist_histo
 
 path_in: str = ''
 path_comp: str = ''
@@ -31,8 +33,18 @@ Usage: getdist.py [<options>] <image path> <pis path or dir> or
 """)
 
 
+def _getdist_histo(path_cur, path_compared):
+    hst1 = HST(path_cur)
+    hst2 = HST(path_compared)
+
+    return dist_histo.get(hst1.hst, hst2.hst)
+
+
 def _getdist(path_cur, path_compared) -> float:
     global dna_depth
+
+    if HST().is_allowed_ext(path_cur):
+        return _getdist_histo(path_cur, path_compared)
 
     pis1 = PIS(path_cur)
     pis2 = PIS(path_compared)

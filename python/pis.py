@@ -43,7 +43,7 @@ class PIS:
     @staticmethod
     def is_allowed_ext(path):
         res = os.path.splitext(path)
-        return True if res[1] == '.pis' or res[1] == '.pix' or res[1] == '.hst' else False
+        return True if res[1] == '.pis' or res[1] == '.pix' else False
 
     @staticmethod
     def _is_pix_ext(path):
