@@ -14,7 +14,7 @@ class PIS:
             self.open(path)
 
     def open(self, path):
-        if not self.is_pis_ext(path):
+        if not self.is_allowed_ext(path):
             return False
 
         self.is_pix = self._is_pix_ext(path)
@@ -41,9 +41,9 @@ class PIS:
             self.dna_depth = int(matched.group(2))
 
     @staticmethod
-    def is_pis_ext(path):
+    def is_allowed_ext(path):
         res = os.path.splitext(path)
-        return True if res[1] == '.pis' or res[1] == '.pix' else False
+        return True if res[1] == '.pis' or res[1] == '.pix' or res[1] == '.hst' else False
 
     @staticmethod
     def _is_pix_ext(path):

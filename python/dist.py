@@ -13,6 +13,13 @@ def _get_cosine(dna1, dna2, weights=None):
 def _get_euclidean(dna1, dna2):
     return np.linalg.norm(dna1 - dna2)
 
+def _get_histo_similarity(dna1, dna2):
+    count = 0
+    sum_diff = 0
+    for i in range(len(dna1)):
+        sum_diff += abs(dna1[i] - dna2[i])
+        count += (dna1[i] + dna2[i])
+    return 1 - float(sum_diff) / count
 
 def _get_center_weights(res):
     weights = []
@@ -44,6 +51,8 @@ def _get_resolution(dna):
 
 
 def get(dist_type, dna1, dna2, depth: int):
+    if dist_type == 'histogram':
+        return _get_histo_similarity(dna1, dna2)
     dna1 = dna1.astype(np.float32)
     dna2 = dna2.astype(np.float32)
     dna1 = dna1 - (depth - 1) / 2

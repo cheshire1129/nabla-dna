@@ -27,6 +27,7 @@ Usage: getdist.py [<options>] <image path> <pis path or dir> or
       c-similarity(default): center weighted cosine similarity
       cosine: cosine distance
       euclidean: euclidean distance
+      histogram: histogram similarity
 """)
 
 
@@ -40,10 +41,10 @@ def _getdist(path_cur, path_compared) -> float:
 
     if pis1.dna_resolution > 0 and pis2.dna_resolution > 0:
         if pis1.dna_resolution != pis2.dna_resolution:
-            return None
+            raise Exception("DNA resolution mismatch")
     if pis1.dna_depth > 0 and pis2.dna_depth > 0:
         if pis1.dna_depth != pis2.dna_depth:
-            return None
+            raise Exception("DNA depth mismatch")
     if dna_depth == 0:
         dna_depth = pis1.dna_depth
         if dna_depth == 0:
@@ -61,7 +62,7 @@ def _getdist_one(path_compared: str):
 
 
 def _getdist_folder(path_comp_dir):
-    global path_in
+    global path_in, min_similarity
 
     path_in_ext = os.path.splitext(os.path.basename(path_in))[1]
     path_compared_dir = os.path.dirname(path_comp_dir)
@@ -86,7 +87,7 @@ def _getdist_folder_all():
     path_in_dir = os.path.dirname(path_in)
     for item in sorted(os.listdir(path_in)):
         path_cur = os.path.join(path_in_dir, item)
-        if not os.path.isfile(path_cur) or os.path.splitext(item)[1] != '.pis':
+        if not os.path.isfile(path_cur):
             continue
 
         checked_items.append(item)

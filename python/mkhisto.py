@@ -21,7 +21,7 @@ do_nabla_sum = False
 
 def _usage_mkhisto():
     print("""\
-Usage: mkhisto.py [<options>] <image or PIS path>
+Usage: mkhisto.py [<options>] <image or PIS path/folder>
    <options>
    -h: help(this message)
    -x <resolution>: DNA resolution (default: 4)
@@ -31,30 +31,44 @@ Usage: mkhisto.py [<options>] <image or PIS path>
    -o <output>: save histogram as text
 """)
 
-def _make_histogram(grays):
-    global path_output
-
+def _make_histogram(grays, path_out):
     h = histo.Histo(grays)
     if path_output:
-        h.save(path_output)
+        h.save(path_out)
     else:
         h.show()
 
-def _make_histogram_by_bmp(path: str):
+def _make_histogram_by_bmp(path: str, path_out):
     global dna_resolution, dna_depth, do_nabla_sum, skip_normalization
 
     bmp = NablaBitmap(dna_resolution, dna_depth, not do_nabla_sum)
     bmp.build_dna_bitmap(path, skip_normalization)
-    _make_histogram(bmp.bmp_dna)
+    _make_histogram(bmp.bmp_dna, path_out)
 
 def _mkhisto(path, path_out):
     global dna_resolution, dna_depth, do_nabla_sum, skip_normalization
 
-    if pis.PIS.is_pis_ext(path):
+    if pis.PIS.is_allowed_ext(path):
         p = pis.PIS(path)
-        _make_histogram(p.dna)
+        _make_histogram(p.dna, path_out)
     else:
-        _make_histogram_by_bmp(path)
+        _make_histogram_by_bmp(path, path_out)
+
+
+def _mkhisto_folder(path):
+    global path_output
+
+    out_ext = os.path.splitext(os.path.basename(path_output))[1]
+    out_dir = os.path.dirname(path_output)
+    if not os.path.exists(out_dir):
+        os.mkdir(out_dir)
+    dir_list = os.listdir(path)
+    for item in dir_list:
+        if not os.path.isfile(os.path.join(path, item)):
+            continue
+        name, ext = os.path.splitext(item)
+        path_out = os.path.join(out_dir, name + out_ext)
+        _mkhisto(os.path.join(path, item), path_out)
 
 
 def _parse_args():
@@ -95,4 +109,10 @@ if __name__ == "__main__":
     logger.init("mkhisto")
 
     _parse_args()
-    _mkhisto(path_input, path_output)
+    if os.path.isfile(path_input):
+        _mkhisto(path_input, path_output)
+    else:
+        if not path_output:
+            logger.error("output path required")
+            exit(1)
+        _mkhisto_folder(path_input)
