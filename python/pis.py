@@ -41,6 +41,18 @@ class PIS:
             self.dna_depth = int(matched.group(2))
 
     @staticmethod
+    def get_basename(path):
+        res = os.path.splitext(path)
+
+        pat = re.compile('\.x\d\dd\d')
+        res2 = os.path.splitext(res[0])
+        matched = pat.match(res2[1])
+        if matched:
+            return os.path.basename(res2[0])
+        else:
+            return os.path.basename(res[0])
+
+    @staticmethod
     def is_allowed_ext(path):
         res = os.path.splitext(path)
         return True if res[1] == '.pis' or res[1] == '.pix' else False

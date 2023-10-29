@@ -30,6 +30,7 @@ Usage: getdist.py [<options>] <image path> <pis path or dir> or
       cosine: cosine distance
       euclidean: euclidean distance
       histogram: histogram similarity
+      similarity_histo: similarity with histogram check
 """)
 
 
@@ -40,10 +41,10 @@ def _getdist_histo(path_cur, path_compared):
     return dist_histo.get(hst1.hst, hst2.hst)
 
 
-def _getdist(path_cur, path_compared) -> float:
+def _getdist(_dist_type, path_cur, path_compared) -> float:
     global dna_depth
 
-    if HST().is_allowed_ext(path_cur):
+    if _dist_type == 'histogram':
         return _getdist_histo(path_cur, path_compared)
 
     pis1 = PIS(path_cur)
@@ -64,17 +65,17 @@ def _getdist(path_cur, path_compared) -> float:
     if dna_depth == 0:
         dna_depth = 8
 
-    return dist.get(dist_type, dna1, dna2, dna_depth)
+    return dist.get(_dist_type, dna1, dna2, dna_depth)
 
 
 def _getdist_one(path_compared: str):
-    global path_in, min_similarity
+    global dist_type, path_in, min_similarity
 
-    print(_getdist(path_in, path_compared))
+    print(_getdist(dist_type, path_in, path_compared))
 
 
 def _getdist_folder(path_comp_dir):
-    global path_in, min_similarity
+    global dist_type, path_in, min_similarity
 
     path_in_ext = os.path.splitext(os.path.basename(path_in))[1]
     path_compared_dir = os.path.dirname(path_comp_dir)
@@ -86,13 +87,13 @@ def _getdist_folder(path_comp_dir):
         name, ext = os.path.splitext(item)
         if ext != path_in_ext:
             continue
-        similarity = _getdist(path_in, path_compared)
+        similarity = _getdist(dist_type, path_in, path_compared)
         if similarity >= min_similarity:
             print(item, similarity)
 
 
 def _getdist_folder_all():
-    global path_in, min_similarity
+    global dist_type, path_in, min_similarity
 
     checked_items = []
 
@@ -108,9 +109,44 @@ def _getdist_folder_all():
             if item_compared in checked_items:
                 continue
             path_compared = os.path.join(path_in_dir, item_compared)
-            similarity = _getdist(path_cur, path_compared)
+            similarity = _getdist(dist_type, path_cur, path_compared)
             if similarity >= min_similarity:
                 print(f"{similarity:.4f}", f"{item} {item_compared}")
+
+
+def _getdist_folder_all_similarity_histo():
+    global path_in, min_similarity
+
+    checked_items = []
+
+    path_in_dir = os.path.dirname(path_in)
+    for item in sorted(os.listdir(path_in)):
+        path_cur = os.path.join(path_in_dir, item)
+        if not os.path.isfile(path_cur):
+            continue
+        if not PIS().is_allowed_ext(path_cur):
+            continue
+
+        checked_items.append(item)
+
+        for item_compared in os.listdir(path_in):
+            if item_compared in checked_items:
+                continue
+            path_compared = os.path.join(path_in_dir, item_compared)
+            if not PIS().is_allowed_ext(path_compared):
+                continue
+
+            similarity = _getdist('similarity', path_cur, path_compared)
+            if similarity < min_similarity:
+                continue
+
+            path_hst = os.path.join(path_in_dir, PIS.get_basename(path_cur) + ".hst")
+            path_hst_compared = os.path.join(path_in_dir, PIS.get_basename(path_compared) + ".hst")
+            similarity_hst = _getdist('histogram', path_hst, path_hst_compared)
+            if similarity_hst < min_similarity:
+                continue
+
+            print(f"{similarity:.4f} {similarity_hst:.4f} {item} {item_compared}")
 
 
 def _parse_args():
@@ -151,5 +187,7 @@ if __name__ == "__main__":
         _getdist_one(path_comp)
     elif os.path.isfile(path_in):
         _getdist_folder(path_comp)
+    elif dist_type == 'similarity_histo':
+        _getdist_folder_all_similarity_histo()
     else:
         _getdist_folder_all()
