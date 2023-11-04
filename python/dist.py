@@ -46,8 +46,8 @@ def _get_resolution(dna):
 def get(dist_type, dna1, dna2, depth: int):
     dna1 = dna1.astype(np.float32)
     dna2 = dna2.astype(np.float32)
-    dna1 = dna1 - (depth - 1) / 2
-    dna2 = dna2 - (depth - 1) / 2
+    dna1 = dna1 - (2 ** depth - 1) / 2
+    dna2 = dna2 - (2 ** depth - 1) / 2
     if dist_type == 'similarity':
         return _get_similarity(dna1, dna2)
     elif dist_type == 'c-similarity':
