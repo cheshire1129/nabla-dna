@@ -38,10 +38,9 @@ class AveragedBitmap:
         he: int = int(math.ceil(fhe))
 
         # following cases can occur due to floating point error
-        if we >= self.width:
-            we -= 1
-        if he >= self.height:
-            he -= 1
+        if we > self.width: we -= 1
+        if he > self.height: he -= 1
+
         for h in range(hs, he):
             weight: float = 1
             if h == hs:
@@ -75,3 +74,33 @@ class AveragedBitmap:
     def build_averaged_bitmap(self, path):
         self.load_grayscale_bmp(path)
         self.convert_averaged_bmp()
+
+    def do_sobel(self):
+        if self.dna_resolution <= 3:
+            raise Exception('DNA resolution should be larger than 3')
+
+        filter_w = [[-1, 0, 1], [-2, 0, 2], [-1, 0, 1]]
+        filter_h = [[-1, -2, -1], [0, 0, 0], [1, 2, 1]]
+
+        bmp_sobeled = np.ndarray([self.dna_resolution - 2, self.dna_resolution - 2])
+        max_value = 0
+        for h in range(1, self.dna_resolution - 1):
+            for w in range(1, self.dna_resolution - 1):
+                sum_w = 0
+                sum_h = 0
+                for i in range(3):
+                    for j in range(3):
+                        gray = self.bmp_dna[h - 1 + j][w - 1 + i]
+                        sum_w += gray * filter_w[j][i]
+                        sum_h += gray * filter_h[j][i]
+                bmp_sobeled[h - 1][w - 1] = abs(sum_w) + abs(sum_h)
+                if max_value < bmp_sobeled[h - 1][w - 1]:
+                    max_value = bmp_sobeled[h - 1][w - 1]
+        self.dna_resolution -= 2
+        self.width -= 2
+        self.height -= 2
+        self.bmp_dna = bmp_sobeled
+
+        for h in range(0, self.dna_resolution):
+            for w in range(0, self.dna_resolution):
+                self.bmp_dna[h][w] = int(self.bmp_dna[h][w] / max_value * 255)

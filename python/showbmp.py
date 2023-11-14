@@ -16,13 +16,15 @@ class Mode(Enum):
     ModeAverage = 1
     ModeRotated = 2
     ModeNabla = 3
+    ModeSobel = 4
 
 
 path_input: str = ""
 dna_resolution: int = DNA_RESOLUTION_DEFAULT
 mode: Mode = Mode.ModeBitmap
 as_raw: bool = False
-scaled: int = 10
+scaled: int = 1
+apply_sobel: bool = False
 
 def _usage_showbmp():
     print("""\
@@ -33,6 +35,7 @@ Usage: showbmp.py <image path>
    -m <mode>: bitmap, averaged, rotated, nabla
    -r: show as raw texts
    -s <scale factor>: image scaling if it is too small
+   -c: apply sobel filter(contour)
 """)
 
 
@@ -98,14 +101,17 @@ def _show_bitmap_vector(bmp: NablaBitmap):
 
 
 def _showbmp():
-    global path_input, dna_resolution, mode
+    global path_input, dna_resolution, mode, apply_sobel
 
-    bmp = NablaBitmap(dna_resolution)
+    resolution = dna_resolution + 2 if apply_sobel else dna_resolution
+    bmp = NablaBitmap(resolution)
     bmp.load_grayscale_bmp(path_input)
     if mode == Mode.ModeBitmap:
         _show_bitmap_matrix(bmp)
         return
     bmp.convert_averaged_bmp()
+    if apply_sobel: bmp.do_sobel()
+
     if mode == Mode.ModeAverage:
         _show_bitmap_matrix(bmp)
         return
@@ -133,10 +139,10 @@ def _setup_mode(mode_str: str):
 
 
 def _parse_args():
-    global path_input, dna_resolution, as_raw, scaled
+    global path_input, dna_resolution, as_raw, scaled, apply_sobel
 
     try:
-        opts, args = getopt.getopt(sys.argv[1:], "hx:m:rs:")
+        opts, args = getopt.getopt(sys.argv[1:], "hx:m:rs:c")
     except getopt.GetoptError:
         logger.error("invalid option")
         _usage_showbmp()
@@ -149,10 +155,12 @@ def _parse_args():
             dna_resolution = int(a)
         elif o == '-m':
             _setup_mode(a)
-        elif o == 'r':
+        elif o == '-r':
             as_raw = True
         elif o == '-s':
             scaled = int(a)
+        elif o == '-c':
+            apply_sobel = True
 
     if len(args) < 1:
         logger.error("input image required")

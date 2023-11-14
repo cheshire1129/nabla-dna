@@ -15,6 +15,7 @@ dna_resolution = DNA_RESOLUTION_DEFAULT
 dna_depth: int = 8
 skip_normalization = False
 skip_nabla_sum = False
+apply_sobel = False
 
 
 def _usage_mkdna():
@@ -27,14 +28,17 @@ Usage: mkdna.py [<options>] <image path or folder>
    -N: skip normalization
    -S: skip nabla sum
    -o <output>: save dna as an image or text
+   -c: apply sobel filter(contour)
 """)
 
 
 def _mkdna(path, path_out):
-    global dna_resolution, dna_depth, skip_nabla_sum, skip_normalization
+    global dna_resolution, dna_depth, skip_nabla_sum, skip_normalization, apply_sobel
 
-    bmp = NablaBitmap(dna_resolution, dna_depth, skip_nabla_sum)
-    bmp.build_dna_bitmap(path, skip_normalization)
+    resolution = dna_resolution + 2 if apply_sobel else dna_resolution
+
+    bmp = NablaBitmap(resolution, dna_depth, skip_nabla_sum)
+    bmp.build_dna_bitmap(path, skip_normalization, apply_sobel)
     if path_out:
         res = os.path.splitext(path_out)
         if res[1] == '.pis':
@@ -62,10 +66,10 @@ def _mkdna_folder(path):
 
 
 def _parse_args():
-    global path_input, path_output, dna_resolution, dna_depth, skip_nabla_sum, skip_normalization
+    global path_input, path_output, dna_resolution, dna_depth, skip_nabla_sum, skip_normalization, apply_sobel
 
     try:
-        opts, args = getopt.getopt(sys.argv[1:], "o:x:d:NSh")
+        opts, args = getopt.getopt(sys.argv[1:], "o:x:d:NSch")
     except getopt.GetoptError:
         logger.error("invalid option")
         _usage_mkdna()
@@ -87,6 +91,8 @@ def _parse_args():
             skip_normalization = True
         elif o == '-S':
             skip_nabla_sum = True
+        elif o == '-c':
+            apply_sobel = True
 
     if len(args) < 1:
         logger.error("input image required")

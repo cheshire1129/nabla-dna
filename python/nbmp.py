@@ -12,8 +12,9 @@ class NablaBitmap(abmp.AveragedBitmap):
         self.dna_depth = dna_depth
         self.skip_nabla_sum = skip_nabla_sum
 
-    def build_dna_bitmap(self, path, skip_normalization=False):
+    def build_dna_bitmap(self, path, skip_normalization=False, apply_sobel = False):
         self.build_averaged_bitmap(path)
+        if apply_sobel: self.do_sobel()
 
         if not self.skip_nabla_sum:
             self.do_nabla_sum()
