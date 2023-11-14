@@ -8,13 +8,14 @@ from pis import PIS
 from hst import HST
 import dist
 import dist_histo
+import glob
 
 path_in: str = ''
 path_comp: str = ''
 dist_type: str = 'similarity'
 dna_depth: int = 0
 min_similarity: float = -100
-
+pairs_only = []
 
 def _usage_getdist():
     print("""\
@@ -31,6 +32,7 @@ Usage: getdist.py [<options>] <image path> <pis path or dir> or
       euclidean: euclidean distance
       histogram: histogram similarity
       similarity_histo: similarity with histogram check
+   -P <matched pairs file>: only show matched pairs
 """)
 
 
@@ -68,8 +70,16 @@ def _getdist(_dist_type, path_cur, path_compared) -> float:
     return dist.get(_dist_type, dna1, dna2, dna_depth)
 
 
+def _showdist(_dist_type, item, item_compared, path_cur, path_compared):
+    global min_similarity
+
+    similarity = _getdist(dist_type, path_cur, path_compared)
+    if similarity >= min_similarity:
+        print(f"{similarity:.4f}", f"{item} {item_compared}")
+
+
 def _getdist_one(path_compared: str):
-    global dist_type, path_in, min_similarity
+    global dist_type, path_in
 
     print(_getdist(dist_type, path_in, path_compared))
 
@@ -93,7 +103,7 @@ def _getdist_folder(path_comp_dir):
 
 
 def _getdist_folder_all():
-    global dist_type, path_in, min_similarity
+    global dist_type, path_in
 
     checked_items = []
 
@@ -109,9 +119,18 @@ def _getdist_folder_all():
             if item_compared in checked_items:
                 continue
             path_compared = os.path.join(path_in_dir, item_compared)
-            similarity = _getdist(dist_type, path_cur, path_compared)
-            if similarity >= min_similarity:
-                print(f"{similarity:.4f}", f"{item} {item_compared}")
+            _showdist(dist_type, item, item_compared, path_cur, path_compared)
+
+
+def _getdist_folder_pairs():
+    global pairs_only
+    global dist_type, path_in, min_similarity
+
+    for pair in pairs_only:
+        path_cur = glob.glob(os.path.join(path_in, pair[0]) + '.*')[0]
+        path_compared = glob.glob(os.path.join(path_in, pair[1]) + '.*')[0]
+
+        _showdist(dist_type, pair[0], pair[1], path_cur, path_compared)
 
 
 def _getdist_folder_all_similarity_histo():
@@ -149,11 +168,35 @@ def _getdist_folder_all_similarity_histo():
             print(f"{similarity:.4f} {similarity_hst:.4f} {item} {item_compared}")
 
 
+def setup_pairs_only(fpath: str):
+    global pairs_only
+
+    try:
+        f = open(fpath, 'r')
+    except FileNotFoundError:
+        logger.error("cannot open pairs file")
+        exit(1)
+
+    for line in f:
+        if len(line) == 0:
+            continue
+        if line[0] == '#':
+            continue
+        pairs = line.split()
+        if len(pairs) == 0:
+            continue
+        if len(pairs) != 2:
+            logger.error("weird format")
+            exit(1)
+        pairs_only.append(pairs)
+    f.close()
+
+
 def _parse_args():
     global path_in, path_comp, dist_type, dna_depth, min_similarity
 
     try:
-        opts, args = getopt.getopt(sys.argv[1:], "hs:d:t:")
+        opts, args = getopt.getopt(sys.argv[1:], "hs:d:t:P:")
     except getopt.GetoptError:
         logger.error("invalid option")
         _usage_getdist()
@@ -168,6 +211,8 @@ def _parse_args():
             dist_type = a
         elif o == '-s':
             min_similarity = float(a)
+        elif o == '-P':
+            setup_pairs_only(a)
 
     if len(args) < 1 or (not os.path.isdir(args[0]) and len(args) < 2):
         logger.error("input images required")
@@ -190,4 +235,7 @@ if __name__ == "__main__":
     elif dist_type == 'similarity_histo':
         _getdist_folder_all_similarity_histo()
     else:
-        _getdist_folder_all()
+        if pairs_only:
+            _getdist_folder_pairs()
+        else:
+            _getdist_folder_all()
