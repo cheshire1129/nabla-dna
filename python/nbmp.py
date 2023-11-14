@@ -20,12 +20,12 @@ class NablaBitmap(abmp.AveragedBitmap):
         else:
             self._vectorize()
         if not skip_normalization:
-            self._normalize_gray()
+            self.normalize_intensity()
 
         for i in range(len(self.bmp_dna)):
             self.bmp_dna[i] = int(round(self.bmp_dna[i] / 255 * (self.gray_depth - 1)))
 
-    def _normalize_gray(self):
+    def normalize_intensity(self):
         v_max = v_min = self.bmp_dna[0]
         for i in range(len(self.bmp_dna)):
             if self.bmp_dna[i] < v_min:

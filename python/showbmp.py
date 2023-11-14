@@ -1,6 +1,8 @@
 #!/usr/bin/python3
 
 import sys
+from PIL import Image
+import math
 import getopt
 from enum import Enum
 import logger
@@ -12,12 +14,15 @@ DNA_RESOLUTION_DEFAULT = 4
 class Mode(Enum):
     ModeBitmap = 0
     ModeAverage = 1
-    ModeNabla = 2
+    ModeRotated = 2
+    ModeNabla = 3
 
 
 path_input: str = ""
 dna_resolution: int = DNA_RESOLUTION_DEFAULT
 mode: Mode = Mode.ModeBitmap
+as_raw: bool = False
+scaled: int = 10
 
 def _usage_showbmp():
     print("""\
@@ -25,20 +30,72 @@ Usage: showbmp.py <image path>
    <options>
    -h: help(this message)
    -x <resolution>: DNA resolution (default: 4)
-   -a: show averaged bitmap
-   -n: show nabla bitmap
+   -m <mode>: bitmap, averaged, rotated, nabla
+   -r: show as raw texts
+   -s <scale factor>: image scaling if it is too small
 """)
 
-def _show_bitmap_matrix(bmp: NablaBitmap):
+
+def _show_bitmap_matrix_as_raw(bmp: NablaBitmap):
     for h in range(bmp.height):
         for w in range(bmp.width):
             print("%.2f " % float(bmp.bmp_dna[h][w]), end='')
         print()
 
-def _show_bitmap_vector(bmp: NablaBitmap):
+
+def _show_bitmap_matrix_window(bmp: NablaBitmap):
+    global scaled
+
+    im = Image.new('L', (bmp.width * scaled, bmp.height * scaled))
+    for h in range(bmp.height):
+        for w in range(bmp.width):
+            for i in range(scaled):
+                for j in range(scaled):
+                    im.putpixel((w * scaled + i, h * scaled + j), int(bmp.bmp_dna[h][w]))
+    im.show('Bitmap Matrix')
+
+
+def _show_bitmap_vector_as_raw(bmp: NablaBitmap):
     for f in bmp.bmp_dna:
         print("%.2f " % f, end='')
     print()
+
+
+def _show_bitmap_vector_window(bmp: NablaBitmap):
+    global scaled
+
+    im = Image.new('LA', (bmp.width * scaled, bmp.height * scaled))
+    im.putalpha(0)
+    c = 0
+    for h in range(int((bmp.dna_resolution + 1) / 2)):
+        for w in range(h, bmp.dna_resolution - h):
+            if (w >= bmp.dna_resolution - h - 1 and
+                    (w != h or w != (bmp.dna_resolution + 1) / 2 - 1 or bmp.dna_resolution % 1 != 0)):
+                break
+            for i in range(scaled):
+                for j in range(scaled):
+                    im.putpixel((w * scaled + i, h * scaled + j), (int(bmp.bmp_dna[c]), 255))
+            c += 1
+    im.show('Bitmap Nabla')
+
+
+def _show_bitmap_matrix(bmp: NablaBitmap):
+    global as_raw
+
+    if as_raw:
+        _show_bitmap_matrix_as_raw(bmp)
+    else:
+        _show_bitmap_matrix_window(bmp)
+
+
+def _show_bitmap_vector(bmp: NablaBitmap):
+    global as_raw
+
+    if as_raw:
+        _show_bitmap_vector_as_raw(bmp)
+    else:
+        _show_bitmap_vector_window(bmp)
+
 
 def _showbmp():
     global path_input, dna_resolution, mode
@@ -53,14 +110,33 @@ def _showbmp():
         _show_bitmap_matrix(bmp)
         return
     bmp.do_nabla_sum()
+    if mode == Mode.ModeNabla:
+        bmp.normalize_intensity()
+
     _show_bitmap_vector(bmp)
 
 
+def _setup_mode(mode_str: str):
+    global mode
+
+    mode_maps = {
+        'bitmap': Mode.ModeBitmap,
+        'averaged': Mode.ModeAverage,
+        'rotated': Mode.ModeRotated,
+        'nabla': Mode.ModeNabla
+    }
+
+    if mode_str not in mode_maps:
+        logger.error(f"{mode_str}: unsupported mode")
+        exit(1)
+    mode = mode_maps[mode_str]
+
+
 def _parse_args():
-    global path_input, dna_resolution, mode
+    global path_input, dna_resolution, as_raw, scaled
 
     try:
-        opts, args = getopt.getopt(sys.argv[1:], "hx:an")
+        opts, args = getopt.getopt(sys.argv[1:], "hx:m:rs:")
     except getopt.GetoptError:
         logger.error("invalid option")
         _usage_showbmp()
@@ -69,12 +145,14 @@ def _parse_args():
         if o == '-h':
             _usage_showbmp()
             exit(0)
-        elif o == '-s':
+        elif o == '-x':
             dna_resolution = int(a)
-        elif o == '-a':
-            mode = Mode.ModeAverage
-        elif o == '-n':
-            mode = Mode.ModeNabla
+        elif o == '-m':
+            _setup_mode(a)
+        elif o == 'r':
+            as_raw = True
+        elif o == '-s':
+            scaled = int(a)
 
     if len(args) < 1:
         logger.error("input image required")
