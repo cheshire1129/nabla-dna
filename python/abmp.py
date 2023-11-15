@@ -4,9 +4,8 @@ import math
 
 
 class AveragedBitmap:
-    def __init__(self, dna_resolution=0, dna_depth=8):
+    def __init__(self, dna_resolution=0):
         self.dna_resolution = dna_resolution
-        self.gray_depth = 2 ** dna_depth
         self.bmp_dna = None
         self.width = 0
         self.height = 0
@@ -75,7 +74,7 @@ class AveragedBitmap:
         self.load_grayscale_bmp(path)
         self.convert_averaged_bmp()
 
-    def do_sobel(self):
+    def do_sobel(self, sobel_threshold: float):
         if self.dna_resolution <= 3:
             raise Exception('DNA resolution should be larger than 3')
 
@@ -84,6 +83,7 @@ class AveragedBitmap:
 
         bmp_sobeled = np.ndarray([self.dna_resolution - 2, self.dna_resolution - 2])
         max_value = 0
+        min_value = 255
         for h in range(1, self.dna_resolution - 1):
             for w in range(1, self.dna_resolution - 1):
                 sum_w = 0
@@ -93,9 +93,13 @@ class AveragedBitmap:
                         gray = self.bmp_dna[h - 1 + j][w - 1 + i]
                         sum_w += gray * filter_w[j][i]
                         sum_h += gray * filter_h[j][i]
-                bmp_sobeled[h - 1][w - 1] = abs(sum_w) + abs(sum_h)
-                if max_value < bmp_sobeled[h - 1][w - 1]:
-                    max_value = bmp_sobeled[h - 1][w - 1]
+                sobel = abs(sum_w) + abs(sum_h)
+                bmp_sobeled[h - 1][w - 1] = sobel
+                if max_value < sobel:
+                    max_value = sobel
+                if min_value > sobel:
+                    min_value = sobel
+        drop_off = int(min_value + (max_value - min_value) * sobel_threshold)
         self.dna_resolution -= 2
         self.width -= 2
         self.height -= 2
@@ -103,4 +107,7 @@ class AveragedBitmap:
 
         for h in range(0, self.dna_resolution):
             for w in range(0, self.dna_resolution):
-                self.bmp_dna[h][w] = int(self.bmp_dna[h][w] / max_value * 255)
+                if self.bmp_dna[h][w] <= drop_off:
+                    self.bmp_dna[h][w] = 0
+                else:
+                    self.bmp_dna[h][w] = int((self.bmp_dna[h][w] - drop_off) / (max_value - drop_off) * 255)

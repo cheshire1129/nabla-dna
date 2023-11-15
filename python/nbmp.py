@@ -8,13 +8,14 @@ import abmp
 
 class NablaBitmap(abmp.AveragedBitmap):
     def __init__(self, dna_resolution=0, dna_depth=8, skip_nabla_sum=False):
-        super().__init__(dna_resolution, dna_depth)
+        super().__init__(dna_resolution)
         self.dna_depth = dna_depth
+        self.gray_depth = 2 ** dna_depth
         self.skip_nabla_sum = skip_nabla_sum
 
-    def build_dna_bitmap(self, path, skip_normalization=False, apply_sobel = False):
+    def build_dna_bitmap(self, path, skip_normalization=False, sobel_threshold = -1):
         self.build_averaged_bitmap(path)
-        if apply_sobel: self.do_sobel()
+        if sobel_threshold >= 0: self.do_sobel(sobel_threshold)
 
         if not self.skip_nabla_sum:
             self.do_nabla_sum()
@@ -22,9 +23,7 @@ class NablaBitmap(abmp.AveragedBitmap):
             self._vectorize()
         if not skip_normalization:
             self.normalize_intensity()
-
-        for i in range(len(self.bmp_dna)):
-            self.bmp_dna[i] = int(round(self.bmp_dna[i] / 255 * (self.gray_depth - 1)))
+        self.quantize_intensity()
 
     def normalize_intensity(self):
         v_max = v_min = self.bmp_dna[0]
@@ -39,6 +38,12 @@ class NablaBitmap(abmp.AveragedBitmap):
             return
         for i in range(len(self.bmp_dna)):
             self.bmp_dna[i] = (self.bmp_dna[i] - v_min) * 255 / (v_max - v_min)
+
+    def quantize_intensity(self, use_full_grayscale: bool = False):
+        for i in range(len(self.bmp_dna)):
+            self.bmp_dna[i] = int(round(self.bmp_dna[i] / 255 * (self.gray_depth - 1)))
+            if use_full_grayscale:
+                self.bmp_dna[i] *= (2 << (8 - self.dna_depth))
 
     def do_nabla_sum(self):
         bmp_rot = []

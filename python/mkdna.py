@@ -18,7 +18,7 @@ dna_resolution = DNA_RESOLUTION_DEFAULT
 dna_depth: int = 8
 skip_normalization = False
 skip_nabla_sum = False
-apply_sobel = False
+sobel_threshold: float = -1
 pairs: Pairs = None
 
 def _usage_mkdna():
@@ -31,18 +31,18 @@ Usage: mkdna.py [<options>] <image path or folder>
    -N: skip normalization
    -S: skip nabla sum
    -o <output>: save dna as an image or text
-   -c: apply sobel filter(contour)
+   -c <threshold> : apply sobel filter(contour) with threshold(drop ratio)
    -P <pairs file>: only make DNA's for matched pairs
 """)
 
 
 def _mkdna(path, path_out):
-    global dna_resolution, dna_depth, skip_nabla_sum, skip_normalization, apply_sobel
+    global dna_resolution, dna_depth, skip_nabla_sum, skip_normalization, sobel_threshold
 
-    resolution = dna_resolution + 2 if apply_sobel else dna_resolution
+    resolution = dna_resolution + 2 if sobel_threshold >= 0 else dna_resolution
 
     bmp = NablaBitmap(resolution, dna_depth, skip_nabla_sum)
-    bmp.build_dna_bitmap(path, skip_normalization, apply_sobel)
+    bmp.build_dna_bitmap(path, skip_normalization, sobel_threshold)
     if path_out:
         res = os.path.splitext(path_out)
         if res[1] == '.pis':
@@ -84,10 +84,11 @@ def _mkdna_folder_pairs(path):
 
 
 def _parse_args():
-    global path_input, path_output, dna_resolution, dna_depth, skip_nabla_sum, skip_normalization, apply_sobel, pairs
+    global path_input, path_output, dna_resolution, dna_depth, skip_nabla_sum, skip_normalization,\
+        sobel_threshold, pairs
 
     try:
-        opts, args = getopt.getopt(sys.argv[1:], "o:x:d:NScP:h")
+        opts, args = getopt.getopt(sys.argv[1:], "o:x:d:NSc:P:h")
     except getopt.GetoptError:
         logger.error("invalid option")
         _usage_mkdna()
@@ -110,7 +111,7 @@ def _parse_args():
         elif o == '-S':
             skip_nabla_sum = True
         elif o == '-c':
-            apply_sobel = True
+            sobel_threshold = float(a)
         elif o == '-P':
             pairs = Pairs(a)
             pairs.convert_singles()

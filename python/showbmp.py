@@ -2,7 +2,6 @@
 
 import sys
 from PIL import Image
-import math
 import getopt
 from enum import Enum
 import logger
@@ -21,10 +20,11 @@ class Mode(Enum):
 
 path_input: str = ""
 dna_resolution: int = DNA_RESOLUTION_DEFAULT
+dna_depth: int = 8
 mode: Mode = Mode.ModeBitmap
 as_raw: bool = False
 scaled: int = 1
-apply_sobel: bool = False
+sobel_threshold: float = -1
 
 def _usage_showbmp():
     print("""\
@@ -32,10 +32,11 @@ Usage: showbmp.py <image path>
    <options>
    -h: help(this message)
    -x <resolution>: DNA resolution (default: 4)
+   -d <depth>: DNA depth bit(default and max: 8)
    -m <mode>: bitmap, averaged, rotated, nabla
    -r: show as raw texts
    -s <scale factor>: image scaling if it is too small
-   -c: apply sobel filter(contour)
+   -c <threshold>: apply sobel filter(contour) with threshold(drop ratio)
 """)
 
 
@@ -101,16 +102,16 @@ def _show_bitmap_vector(bmp: NablaBitmap):
 
 
 def _showbmp():
-    global path_input, dna_resolution, mode, apply_sobel
+    global path_input, dna_resolution, dna_depth, mode, sobel_threshold
 
-    resolution = dna_resolution + 2 if apply_sobel else dna_resolution
-    bmp = NablaBitmap(resolution)
+    resolution = dna_resolution + 2 if sobel_threshold >= 0 else dna_resolution
+    bmp = NablaBitmap(resolution, dna_depth)
     bmp.load_grayscale_bmp(path_input)
     if mode == Mode.ModeBitmap:
         _show_bitmap_matrix(bmp)
         return
     bmp.convert_averaged_bmp()
-    if apply_sobel: bmp.do_sobel()
+    if sobel_threshold >= 0: bmp.do_sobel(sobel_threshold)
 
     if mode == Mode.ModeAverage:
         _show_bitmap_matrix(bmp)
@@ -118,6 +119,7 @@ def _showbmp():
     bmp.do_nabla_sum()
     if mode == Mode.ModeNabla:
         bmp.normalize_intensity()
+    bmp.quantize_intensity(True)
 
     _show_bitmap_vector(bmp)
 
@@ -139,10 +141,10 @@ def _setup_mode(mode_str: str):
 
 
 def _parse_args():
-    global path_input, dna_resolution, as_raw, scaled, apply_sobel
+    global path_input, dna_resolution, dna_depth, as_raw, scaled, sobel_threshold
 
     try:
-        opts, args = getopt.getopt(sys.argv[1:], "hx:m:rs:c")
+        opts, args = getopt.getopt(sys.argv[1:], "hx:d:m:rs:c:")
     except getopt.GetoptError:
         logger.error("invalid option")
         _usage_showbmp()
@@ -153,6 +155,11 @@ def _parse_args():
             exit(0)
         elif o == '-x':
             dna_resolution = int(a)
+        elif o == '-d':
+            dna_depth = int(a)
+            if dna_depth < 1 or dna_depth > 8:
+                logger.error("DNA depth should be between 1 and 8")
+                exit(1)
         elif o == '-m':
             _setup_mode(a)
         elif o == '-r':
@@ -160,7 +167,7 @@ def _parse_args():
         elif o == '-s':
             scaled = int(a)
         elif o == '-c':
-            apply_sobel = True
+            sobel_threshold = float(a)
 
     if len(args) < 1:
         logger.error("input image required")
