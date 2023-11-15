@@ -3,19 +3,21 @@
 import sys
 import os
 import getopt
+import glob
+
 import logger
 from pis import PIS
 from hst import HST
 import dist
 import dist_histo
-import glob
+from pairs import Pairs
 
 path_in: str = ''
 path_comp: str = ''
 dist_type: str = 'similarity'
 dna_depth: int = 0
 min_similarity: float = -100
-pairs_only = []
+pairs: Pairs = None
 
 def _usage_getdist():
     print("""\
@@ -32,7 +34,7 @@ Usage: getdist.py [<options>] <image path> <pis path or dir> or
       euclidean: euclidean distance
       histogram: histogram similarity
       similarity_histo: similarity with histogram check
-   -P <matched pairs file>: only show matched pairs
+   -P <pairs file>: only show matched pairs
 """)
 
 
@@ -123,10 +125,10 @@ def _getdist_folder_all():
 
 
 def _getdist_folder_pairs():
-    global pairs_only
+    global pairs
     global dist_type, path_in, min_similarity
 
-    for pair in pairs_only:
+    for pair in pairs:
         path_cur = glob.glob(os.path.join(path_in, pair[0]) + '.*')[0]
         path_compared = glob.glob(os.path.join(path_in, pair[1]) + '.*')[0]
 
@@ -168,32 +170,8 @@ def _getdist_folder_all_similarity_histo():
             print(f"{similarity:.4f} {similarity_hst:.4f} {item} {item_compared}")
 
 
-def setup_pairs_only(fpath: str):
-    global pairs_only
-
-    try:
-        f = open(fpath, 'r')
-    except FileNotFoundError:
-        logger.error("cannot open pairs file")
-        exit(1)
-
-    for line in f:
-        if len(line) == 0:
-            continue
-        if line[0] == '#':
-            continue
-        pairs = line.split()
-        if len(pairs) == 0:
-            continue
-        if len(pairs) != 2:
-            logger.error("weird format")
-            exit(1)
-        pairs_only.append(pairs)
-    f.close()
-
-
 def _parse_args():
-    global path_in, path_comp, dist_type, dna_depth, min_similarity
+    global path_in, path_comp, dist_type, dna_depth, min_similarity, pairs
 
     try:
         opts, args = getopt.getopt(sys.argv[1:], "hs:d:t:P:")
@@ -212,7 +190,7 @@ def _parse_args():
         elif o == '-s':
             min_similarity = float(a)
         elif o == '-P':
-            setup_pairs_only(a)
+            pairs = Pairs(a)
 
     if len(args) < 1 or (not os.path.isdir(args[0]) and len(args) < 2):
         logger.error("input images required")
@@ -235,7 +213,7 @@ if __name__ == "__main__":
     elif dist_type == 'similarity_histo':
         _getdist_folder_all_similarity_histo()
     else:
-        if pairs_only:
+        if pairs:
             _getdist_folder_pairs()
         else:
             _getdist_folder_all()

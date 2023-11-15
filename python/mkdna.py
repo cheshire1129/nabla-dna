@@ -3,8 +3,11 @@
 import sys
 import os
 import getopt
+import glob
+
 import logger
 from nbmp import NablaBitmap
+from pairs import Pairs
 
 DNA_RESOLUTION_DEFAULT = 4
 DNA_DEPTH_DEFAULT = 8
@@ -16,7 +19,7 @@ dna_depth: int = 8
 skip_normalization = False
 skip_nabla_sum = False
 apply_sobel = False
-
+pairs: Pairs = None
 
 def _usage_mkdna():
     print("""\
@@ -29,6 +32,7 @@ Usage: mkdna.py [<options>] <image path or folder>
    -S: skip nabla sum
    -o <output>: save dna as an image or text
    -c: apply sobel filter(contour)
+   -P <pairs file>: only make DNA's for matched pairs
 """)
 
 
@@ -65,11 +69,25 @@ def _mkdna_folder(path):
         _mkdna(os.path.join(path, item), path_out)
 
 
+def _mkdna_folder_pairs(path):
+    global pairs, path_output
+
+    out_ext = os.path.splitext(os.path.basename(path_output))[1]
+    out_dir = os.path.dirname(path_output)
+    if not os.path.exists(out_dir):
+        os.mkdir(out_dir)
+
+    for single in pairs:
+        path_in = glob.glob(os.path.join(path, single) + '.*')[0]
+        path_out = os.path.join(out_dir, single + out_ext)
+        _mkdna(path_in, path_out)
+
+
 def _parse_args():
-    global path_input, path_output, dna_resolution, dna_depth, skip_nabla_sum, skip_normalization, apply_sobel
+    global path_input, path_output, dna_resolution, dna_depth, skip_nabla_sum, skip_normalization, apply_sobel, pairs
 
     try:
-        opts, args = getopt.getopt(sys.argv[1:], "o:x:d:NSch")
+        opts, args = getopt.getopt(sys.argv[1:], "o:x:d:NScP:h")
     except getopt.GetoptError:
         logger.error("invalid option")
         _usage_mkdna()
@@ -93,6 +111,9 @@ def _parse_args():
             skip_nabla_sum = True
         elif o == '-c':
             apply_sobel = True
+        elif o == '-P':
+            pairs = Pairs(a)
+            pairs.convert_singles()
 
     if len(args) < 1:
         logger.error("input image required")
@@ -108,4 +129,7 @@ if __name__ == "__main__":
     if os.path.isfile(path_input):
         _mkdna(path_input, path_output)
     else:
-        _mkdna_folder(path_input)
+        if pairs:
+            _mkdna_folder_pairs(path_input)
+        else:
+            _mkdna_folder(path_input)
