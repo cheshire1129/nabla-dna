@@ -31,7 +31,8 @@ Usage: mkdna.py [<options>] <image path or folder>
    -N: skip normalization
    -S: skip nabla sum
    -o <output>: save dna as an image or text
-   -c <threshold> : apply sobel filter(contour) with threshold(drop ratio)
+   -c <threshold>: apply sobel filter(contour) with threshold(drop ratio)
+                   if threshold > 1, pixels over threshold - 1 will be 255 gray depth.
    -P <pairs file>: only make DNA's for matched pairs
 """)
 

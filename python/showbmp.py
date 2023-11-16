@@ -37,6 +37,7 @@ Usage: showbmp.py <image path>
    -r: show as raw texts
    -s <scale factor>: image scaling if it is too small
    -c <threshold>: apply sobel filter(contour) with threshold(drop ratio)
+                   if threshold > 1, pixels over threshold - 1 will be 255 gray depth.
 """)
 
 
@@ -111,7 +112,8 @@ def _showbmp():
         _show_bitmap_matrix(bmp)
         return
     bmp.convert_averaged_bmp()
-    if sobel_threshold >= 0: bmp.do_sobel(sobel_threshold)
+    if sobel_threshold >= 0:
+        bmp.do_sobel(sobel_threshold)
 
     if mode == Mode.ModeAverage:
         _show_bitmap_matrix(bmp)

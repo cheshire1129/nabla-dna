@@ -55,7 +55,11 @@ class NablaBitmap(abmp.AveragedBitmap):
                 self.bmp_dna[h][w] += self.bmp_dna[self.dna_resolution - 1 - w][h]                        # 90 degree
                 self.bmp_dna[h][w] += self.bmp_dna[self.dna_resolution - 1 - h][self.dna_resolution - 1 - w]    # 180
                 self.bmp_dna[h][w] += self.bmp_dna[w][self.dna_resolution - 1 - h]                        # -90
-                self.bmp_dna[h][w] /= 4
+                if self.as_contour:
+                    if self.bmp_dna[h][w] > 255:
+                        self.bmp_dna[h][w] = 255
+                else:
+                    self.bmp_dna[h][w] /= 4
                 bmp_rot.append(self.bmp_dna[h][w])
         self.bmp_dna = bmp_rot
 

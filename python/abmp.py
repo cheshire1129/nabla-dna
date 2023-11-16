@@ -9,6 +9,7 @@ class AveragedBitmap:
         self.bmp_dna = None
         self.width = 0
         self.height = 0
+        self.as_contour = False
         if self.dna_resolution > 0:
             self.bmp_dna = np.ndarray((dna_resolution, dna_resolution))
 
@@ -81,6 +82,10 @@ class AveragedBitmap:
         filter_w = [[-1, 0, 1], [-2, 0, 2], [-1, 0, 1]]
         filter_h = [[-1, -2, -1], [0, 0, 0], [1, 2, 1]]
 
+        if sobel_threshold > 1:
+            self.as_contour = True
+            sobel_threshold -= 1
+
         bmp_sobeled = np.ndarray([self.dna_resolution - 2, self.dna_resolution - 2])
         max_value = 0
         min_value = 255
@@ -110,4 +115,7 @@ class AveragedBitmap:
                 if self.bmp_dna[h][w] <= drop_off:
                     self.bmp_dna[h][w] = 0
                 else:
-                    self.bmp_dna[h][w] = int((self.bmp_dna[h][w] - drop_off) / (max_value - drop_off) * 255)
+                    if self.as_contour:
+                        self.bmp_dna[h][w] = 255
+                    else:
+                        self.bmp_dna[h][w] = int((self.bmp_dna[h][w] - drop_off) / (max_value - drop_off) * 255)
