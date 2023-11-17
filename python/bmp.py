@@ -27,8 +27,8 @@ class Bitmap:
         self.height = arr_img.shape[0]
         self.bmp_dna = list(map(lambda x: 0.299 * x[0] + 0.587 * x[1] + 0.114 * x[2], zip(r, g, b)))
 
-    def reduce_bound(self, threshold: float):
-        w_start, h_start, w_end, h_end = get_contour_bound(self.bmp_dna, self.width, self.height, threshold)
+    def reduce_bound(self, threshold: float, ksize: int = 3):
+        w_start, h_start, w_end, h_end = get_contour_bound(self.bmp_dna, self.width, self.height, threshold, ksize)
 
         bmp_reduced = np.ndarray((h_end - h_start + 1, w_end - w_start + 1))
         for h in range(h_end - h_start + 1):

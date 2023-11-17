@@ -26,6 +26,7 @@ as_raw: bool = False
 scaled: int = 1
 crop_threshold: float = -1
 sobel_threshold: float = -1
+ksize: int = 3
 
 def _usage_showbmp():
     print("""\
@@ -40,6 +41,7 @@ Usage: showbmp.py <image path>
    -c <threshold>: apply sobel filter(contour) with threshold(drop ratio)
                    if threshold > 1, pixels over threshold - 1 will be 255 gray depth.
    -C <threshold>: crop area outside contour
+   -k <kernel size>: kernel size for sobel filter
 """)
 
 
@@ -105,13 +107,13 @@ def _show_bitmap_vector(bmp: NablaBitmap):
 
 
 def _showbmp():
-    global path_input, dna_resolution, dna_depth, mode, sobel_threshold
+    global path_input, dna_resolution, dna_depth, mode, sobel_threshold, ksize
 
     resolution = dna_resolution + 2 if sobel_threshold >= 0 else dna_resolution
     bmp = NablaBitmap(resolution, dna_depth)
     bmp.load_grayscale_bmp(path_input)
     if crop_threshold >= 0:
-        bmp.reduce_bound(crop_threshold)
+        bmp.reduce_bound(crop_threshold, ksize)
     if mode == Mode.ModeBitmap:
         _show_bitmap_matrix(bmp)
         return
@@ -147,10 +149,10 @@ def _setup_mode(mode_str: str):
 
 
 def _parse_args():
-    global path_input, dna_resolution, dna_depth, as_raw, scaled, sobel_threshold, crop_threshold
+    global path_input, dna_resolution, dna_depth, as_raw, scaled, sobel_threshold, crop_threshold, ksize
 
     try:
-        opts, args = getopt.getopt(sys.argv[1:], "hx:d:m:rs:c:C:")
+        opts, args = getopt.getopt(sys.argv[1:], "hx:d:m:rs:c:C:k:")
     except getopt.GetoptError:
         logger.error("invalid option")
         _usage_showbmp()
@@ -176,6 +178,8 @@ def _parse_args():
             sobel_threshold = float(a)
         elif o == '-C':
             crop_threshold = float(a)
+        elif o == '-k':
+            ksize = int(a)
 
     if len(args) < 1:
         logger.error("input image required")

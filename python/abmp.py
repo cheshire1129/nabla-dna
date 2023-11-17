@@ -52,8 +52,8 @@ class AveragedBitmap(Bitmap):
         self.width = self.dna_resolution
         self.height = self.dna_resolution
 
-    def build_averaged_bitmap(self, path, crop_threshold: float = -1):
+    def build_averaged_bitmap(self, path, crop_threshold: float = -1, ksize:int = 3):
         self.load_grayscale_bmp(path)
         if crop_threshold >= 0:
-            self.reduce_bound(crop_threshold)
+            self.reduce_bound(crop_threshold, ksize)
         self.convert_averaged_bmp()

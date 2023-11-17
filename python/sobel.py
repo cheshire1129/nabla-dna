@@ -1,38 +1,39 @@
 import numpy as np
 
 
-def _get_sobel_sum(bmp: np.ndarray, pos_w:int, pos_h:int):
-    filter_w = [[-1, 0, 1], [-2, 0, 2], [-1, 0, 1]]
-    filter_h = [[-1, -2, -1], [0, 0, 0], [1, 2, 1]]
+def _get_sobel_sum(bmp: np.ndarray, pos_w:int, pos_h:int, ksize:int):
+    filter_w = [[-2, -1, 0, 1, 2], [-2, -1, 0, 1, 2], [-4, -2, 0, 2, 4], [-2, -1, 0, 1, 2], [-2, -1, 0, 1, 2]]
+    filter_h = [[-2, -2, -4, -2, -2], [-1, -1, -2, -1, -1], [0, 0, 0, 0, 0], [1, 1, 2, 1, 1], [2, 2, 4, 2, 2]]
 
+    base_idx = 0 if ksize == 5 else 1
     sum_w = 0
     sum_h = 0
-    for i in range(3):
-        for j in range(3):
+    for i in range(ksize):
+        for j in range(ksize):
             gray = bmp[pos_h - 1 + j][pos_w - 1 + i]
-            sum_w += gray * filter_w[j][i]
-            sum_h += gray * filter_h[j][i]
+            sum_w += gray * filter_w[base_idx + j][base_idx + i]
+            sum_h += gray * filter_h[base_idx + j][base_idx + i]
     return abs(sum_w) + abs(sum_h)
 
 
-def filter_sobel(bmp, width, height, sobel_threshold: float):
-    if width <= 2 or height <= 2:
-        raise Exception('bitmap should be larger than 2')
+def filter_sobel(bmp, width, height, sobel_threshold: float, ksize: int = 3):
+    if width < ksize or height < ksize:
+        raise Exception(f'bitmap should be larger than {ksize}')
 
-    bmp_sobel = np.ndarray((height - 2, width - 2))
+    bmp_sobel = np.ndarray((height - (ksize - 1), width - (ksize - 1)))
     max_value = 0
     min_value = 255
-    for h in range(1, height - 1):
-        for w in range(1, width - 1):
-            sobel = _get_sobel_sum(bmp, w, h)
-            bmp_sobel[h - 1][w - 1] = sobel
+    for h in range(int(ksize / 2), height - int(ksize / 2)):
+        for w in range(int(ksize / 2), width - int(ksize / 2)):
+            sobel = _get_sobel_sum(bmp, w, h, 3)
+            bmp_sobel[h - int(ksize / 2)][w - int(ksize / 2)] = sobel
             if max_value < sobel: max_value = sobel
             if min_value > sobel: min_value = sobel
 
     drop_off = int(min_value + (max_value - min_value) * sobel_threshold)
 
-    for h in range(height - 2):
-        for w in range(width - 2):
+    for h in range(height - (ksize - 1)):
+        for w in range(width - (ksize - 1)):
             if bmp_sobel[h][w] <= drop_off:
                 bmp_sobel[h][w] = 0
             else:
@@ -42,14 +43,14 @@ def filter_sobel(bmp, width, height, sobel_threshold: float):
     return bmp_sobel
 
 
-def get_contour_bound(bmp, width, height, sobel_threshold: float):
-    bmp_sobel = filter_sobel(bmp, width, height, sobel_threshold)
+def get_contour_bound(bmp, width, height, sobel_threshold: float, ksize: float = 3):
+    bmp_sobel = filter_sobel(bmp, width, height, sobel_threshold, ksize)
     found_h_start = False
-    w_start = width - 2
+    w_start = width - (ksize - 1)
     h_start = w_end = h_end = 0
-    for h in range(0, height - 2):
+    for h in range(0, height - (ksize - 1)):
         found_w_start = False
-        for w in range(0, width - 2):
+        for w in range(0, width - (ksize - 1)):
             if bmp_sobel[h][w] != 0:
                 if not found_w_start:
                     found_w_start = True
