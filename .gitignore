@@ -1,3 +1,6 @@
 *~
 /build/
 /run/
+.idea/
+venv/
+__pycache__/
