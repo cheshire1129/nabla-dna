@@ -8,7 +8,7 @@ from keras.models import load_model
 import numpy as np
 
 import dl_dna_model
-from triples import Triples
+from lineEnumerator import LineEnumerator
 
 
 @keras.saving.register_keras_serializable()
@@ -54,7 +54,7 @@ class ModelTriplet(dl_dna_model.DlDnaModel):
             self.dl_model.fit(x=images, y=dummy_y, epochs=dl_dna_model.epochs, verbose=verbose_level)
 
     def train(self, fpath_train: str):
-        triples = Triples(fpath_train)
+        triples = LineEnumerator(fpath_train, True)
         self._train_triplet_model(triples)
 
     def extract_dna(self, data):

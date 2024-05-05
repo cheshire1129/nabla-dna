@@ -11,27 +11,28 @@ import mobilenet
 
 model_type = 'triplet_loss'
 fpath_train: str = ""
-fpath_extract: str = ""
 path_save: str = ""
 path_load: str = ""
+args = None
 
 
 def _usage_dl_dna():
     print("""\
-Usage: DL-DNA.py [<options>]
+Usage: dl-dna.py [<options>]
+                             <image name> : show DNA
+                             <image name> <image name>: get similarity
+                             <image pair file>: get similarities
    <options>
    -h: help(this message)
    -m <model>: triplet_loss(default), mobilenet
    -t <training file>: training mode with file path
        triplet_loss: image list with triple fields
-       mobilenet: image list with single field
-   -e <extraction file>: extract DL-DNA with file path
-       file should be image list with single field
+       mobilenet: not supported
    -s <path for save>: path for saving model
    -l <path for load>: path for loading model
    -u <units>: unit count for embedding vector (N_UNITS: env variable)
    -f <image folder> (IMAGE_FOLDER)
-   -E <epochs> (EPOCHS)
+   -e <epochs> (EPOCHS)
    -v: enable keras output
 """)
 
@@ -46,10 +47,10 @@ def _setup_envs():
 
 
 def _parse_args():
-    global model_type, fpath_train, fpath_extract, path_save, path_load
+    global model_type, fpath_train, args, path_save, path_load
 
     try:
-        opts, args = getopt.getopt(sys.argv[1:], "hm:t:e:f:s:l:u:E:v")
+        opts, args = getopt.getopt(sys.argv[1:], "hm:t:f:s:l:u:e:v")
     except getopt.GetoptError:
         logger.error("invalid option")
         _usage_dl_dna()
@@ -62,8 +63,6 @@ def _parse_args():
             model_type = a
         if o == '-t':
             fpath_train = a
-        if o == '-e':
-            fpath_extract = a
         elif o == '-f':
             dl_dna_model.image_fpath = a
         elif o == '-s':
@@ -72,7 +71,7 @@ def _parse_args():
             path_load = a
         elif o == '-u':
             dl_dna_model.n_units = int(a)
-        elif o == '-E':
+        elif o == '-e':
             dl_dna_model.epochs = int(a)
         elif o == '-v':
             dl_dna_model.verbose = True
@@ -85,7 +84,7 @@ def get_dl_dna_model():
 
 
 if __name__ == "__main__":
-    logger.init("DL-DNA")
+    logger.init("dl_dna")
 
     _setup_envs()
     _parse_args()
@@ -96,5 +95,11 @@ if __name__ == "__main__":
         model.train(fpath_train)
     if path_save:
         model.save(path_save)
-    if fpath_extract:
-        model.extract(fpath_extract)
+
+    if len(args) > 0:
+        if os.path.isfile(args[0]):
+            model.show_similarities(args[0])
+        elif len(args) == 1:
+            model.show_dna(args[0])
+        else:
+            model.show_similarity(args[0], args[1])
