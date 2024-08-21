@@ -31,6 +31,8 @@ def _triplet_loss(y_true, y_pred, alpha=0.4):
 
 class ModelTriplet(dl_dna_model.DlDnaModel):
     def __init__(self):
+        super().__init__()
+
         self.dl_model = MobileNet(weights='imagenet', include_top=False, pooling='avg')
 
         embedding_layer = Dense(dl_dna_model.n_units, activation='relu')(self.dl_model.output)

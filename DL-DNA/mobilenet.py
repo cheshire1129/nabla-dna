@@ -6,6 +6,8 @@ import dl_dna_model
 
 class ModelMobileNet(dl_dna_model.DlDnaModel):
     def __init__(self):
+        super().__init__()
+
         self.dl_model = MobileNet(weights='imagenet')
         self.verbose_level = 1 if dl_dna_model.verbose else 0
 

@@ -33,6 +33,7 @@ Usage: dl-dna.py [<options>]
    -u <units>: unit count for embedding vector (N_UNITS: env variable)
    -f <image folder> (IMAGE_FOLDER)
    -e <epochs> (EPOCHS)
+   -S <seed> (SEED)
    -v: enable keras output
 """)
 
@@ -43,14 +44,16 @@ def _setup_envs():
     if 'IMAGE_FOLDER' in os.environ:
         dl_dna_model.image_fpath = os.environ['IMAGE_FOLDER']
     if 'EPOCHS' in os.environ:
-        dl_dna_model.epochs = os.environ['EPOCHS']
+        dl_dna_model.epochs = int(os.environ['EPOCHS'])
+    if 'SEED' in os.environ:
+        dl_dna_model.seed = int(os.environ['SEED'])
 
 
 def _parse_args():
     global model_type, fpath_train, args, path_save, path_load
 
     try:
-        opts, args = getopt.getopt(sys.argv[1:], "hm:t:f:s:l:u:e:v")
+        opts, args = getopt.getopt(sys.argv[1:], "hm:t:f:s:l:u:e:S:v")
     except getopt.GetoptError:
         logger.error("invalid option")
         _usage_dl_dna()
@@ -73,6 +76,8 @@ def _parse_args():
             dl_dna_model.n_units = int(a)
         elif o == '-e':
             dl_dna_model.epochs = int(a)
+        elif o == '-S':
+            dl_dna_model.seed = int(a)
         elif o == '-v':
             dl_dna_model.verbose = True
 

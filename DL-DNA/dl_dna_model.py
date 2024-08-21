@@ -1,5 +1,6 @@
 import numpy as np
 import os
+import random
 from abc import ABC, abstractmethod
 from keras.preprocessing import image
 from scipy import spatial
@@ -11,12 +12,20 @@ from lineEnumerator import LineEnumerator
 image_fpath: str = ""
 n_units = 64
 epochs = 2
+seed = 0
 verbose = False
 
 
 class DlDnaModel(ABC):
-    def __int__(self):
+    def __init__(self):
+        global seed
+
         np.set_printoptions(precision=3)
+        if seed != 0:
+            random.seed(seed)
+            np.random.seed(seed)
+            import tensorflow
+            tensorflow.random.set_seed(seed)
 
     @abstractmethod
     def train(self, fpath: str):
