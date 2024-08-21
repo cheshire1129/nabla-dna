@@ -11,21 +11,22 @@ import numpy as np
 import dl_dna_model
 from lineEnumerator import LineEnumerator
 
+full_batch = False
 
-def _triplet_loss(_y_true, y_pred, alpha=0.4):
-    anchor = y_pred[0]
-    positive = y_pred[1]
-    negative = y_pred[2]
 
-    # 거리 계산
-    pos_dist = tf.reduce_sum(tf.square(anchor - positive))
-    neg_dist = tf.reduce_sum(tf.square(anchor - negative))
-
-    # Triplet Loss
-    basic_loss = pos_dist - neg_dist + alpha
-    loss = tf.maximum(basic_loss, 0.0)
-
-    return loss
+def _triplet_loss(_y_true, y_pred):
+    losses = []
+    n_triples = int(y_pred.shape[0] / 3)
+    for idx in range(0, n_triples * 3, 3):
+        anchor = y_pred[idx]
+        positive = y_pred[idx + 1]
+        negative = y_pred[idx + 2]
+        pos_dist = tf.reduce_sum(tf.square(anchor - positive))
+        neg_dist = tf.reduce_sum(tf.square(anchor - negative))
+        basic_loss = pos_dist - neg_dist + 1
+        losses.append(tf.maximum(basic_loss, 0.0))
+    x = tf.reduce_mean(losses)
+    return x
 
 
 class ModelTriplet(dl_dna_model.DlDnaModel):
@@ -49,9 +50,15 @@ class ModelTriplet(dl_dna_model.DlDnaModel):
         return np.array(images)
 
     def _train_triplet_model(self, triples):
+        global full_batch
+
         images = self._load_triplets(triples)
         dummy_y = np.ones((images.shape[0],))
-        self.dl_model.fit(x=images, y=dummy_y, batch_size=3, epochs=dl_dna_model.epochs, verbose=self.verbose_level)
+
+        batch_size = 3 if not full_batch else None
+        print(batch_size)
+        self.dl_model.fit(x=images, y=dummy_y, batch_size=batch_size, epochs=dl_dna_model.epochs,
+                          verbose=self.verbose_level)
 
     def train(self, fpath_train: str):
         triples = LineEnumerator(fpath_train, True)

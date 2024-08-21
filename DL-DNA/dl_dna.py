@@ -33,7 +33,8 @@ Usage: dl-dna.py [<options>]
    -u <units>: unit count for embedding vector (N_UNITS: env variable)
    -f <image folder> (IMAGE_FOLDER)
    -e <epochs> (EPOCHS)
-   -S <seed> (SEED)
+   -S <seed> (SEED): random seed for deterministic run
+   -B (FULL_BATCH): full batch mode(triplet_loss only)
    -v: enable keras output
 """)
 
@@ -47,13 +48,15 @@ def _setup_envs():
         dl_dna_model.epochs = int(os.environ['EPOCHS'])
     if 'SEED' in os.environ:
         dl_dna_model.seed = int(os.environ['SEED'])
+    if 'FULL_BATCH' in os.environ:
+        triplet_model.full_batch = True
 
 
 def _parse_args():
     global model_type, fpath_train, args, path_save, path_load
 
     try:
-        opts, args = getopt.getopt(sys.argv[1:], "hm:t:f:s:l:u:e:S:v")
+        opts, args = getopt.getopt(sys.argv[1:], "hm:t:f:s:l:u:e:S:Bv")
     except getopt.GetoptError:
         logger.error("invalid option")
         _usage_dl_dna()
@@ -78,6 +81,8 @@ def _parse_args():
             dl_dna_model.epochs = int(a)
         elif o == '-S':
             dl_dna_model.seed = int(a)
+        elif o == '-B':
+            triplet_model.full_batch = True
         elif o == '-v':
             dl_dna_model.verbose = True
 
