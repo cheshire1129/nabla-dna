@@ -13,7 +13,7 @@ image_fpath: str = ""
 n_units = 64
 epochs = 2
 seed = 0
-verbose = False
+verbose = ""
 
 
 class DlDnaModel(ABC):

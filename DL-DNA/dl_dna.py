@@ -35,7 +35,9 @@ Usage: dl-dna.py [<options>]
    -e <epochs> (EPOCHS)
    -S <seed> (SEED): random seed for deterministic run
    -B (FULL_BATCH): full batch mode(triplet_loss only)
-   -v: enable keras output
+   -v <options>: enable verbose output
+      k: keras output
+      t: triplet output
 """)
 
 
@@ -56,7 +58,7 @@ def _parse_args():
     global model_type, fpath_train, args, path_save, path_load
 
     try:
-        opts, args = getopt.getopt(sys.argv[1:], "hm:t:f:s:l:u:e:S:Bv")
+        opts, args = getopt.getopt(sys.argv[1:], "hm:t:f:s:l:u:e:S:Bv:")
     except getopt.GetoptError:
         logger.error("invalid option")
         _usage_dl_dna()
@@ -84,7 +86,7 @@ def _parse_args():
         elif o == '-B':
             triplet_model.full_batch = True
         elif o == '-v':
-            dl_dna_model.verbose = True
+            dl_dna_model.verbose = a
 
 
 def get_dl_dna_model():
