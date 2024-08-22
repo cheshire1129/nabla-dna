@@ -5,6 +5,10 @@ from tensorflow.keras.applications import MobileNet
 from tensorflow.keras.layers import Dense
 # noinspection PyUnresolvedReferences
 from tensorflow.keras.models import Model, load_model
+# noinspection PyUnresolvedReferences
+from tensorflow.keras.optimizers import Adam
+# noinspection PyUnresolvedReferences
+from tensorflow.keras.callbacks import EarlyStopping
 
 import numpy as np
 
@@ -28,6 +32,9 @@ def _triplet_loss(_y_true, y_pred, alpha=0.4):
         if 't' in dl_dna_model.verbose:
             print(f"a: {anchor.numpy()} p: {positive.numpy()}, n: {negative.numpy()} pd: {pos_dist.numpy():.3f}, "
                   f"nd: {neg_dist.numpy():.3f}")
+        elif 'T' in dl_dna_model.verbose:
+            print(f"pd: {pos_dist.numpy():.3f}, nd: {neg_dist.numpy():.3f}")
+
     x = tf.reduce_mean(losses)
     return x
 
@@ -43,7 +50,8 @@ class ModelTriplet(dl_dna_model.DlDnaModel):
         embedding_layer = Dense(dl_dna_model.n_units, activation='relu')(mobilenet.output)
 
         self.dl_model = Model(inputs=mobilenet.input, outputs=embedding_layer)
-        self.dl_model.compile(optimizer='adam', loss=_triplet_loss, metrics=['accuracy'])
+        optimizer = Adam(learning_rate=0.1)
+        self.dl_model.compile(optimizer=optimizer, loss=_triplet_loss, metrics=['accuracy'])
 
         self.verbose_level = 1 if 'k' in dl_dna_model.verbose else 0
 
@@ -62,8 +70,9 @@ class ModelTriplet(dl_dna_model.DlDnaModel):
         dummy_y = np.ones((images.shape[0],))
 
         batch_size = 3 if not full_batch else None
+        early_stopping = EarlyStopping(monitor='loss', patience=10, restore_best_weights=True)
         self.dl_model.fit(x=images, y=dummy_y, batch_size=batch_size, epochs=dl_dna_model.epochs,
-                          shuffle=False, verbose=self.verbose_level)
+                          shuffle=False, callbacks=[early_stopping], verbose=self.verbose_level)
 
     def train(self, fpath_train: str):
         triples = LineEnumerator(fpath_train, True)

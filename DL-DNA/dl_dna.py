@@ -37,7 +37,8 @@ Usage: dl-dna.py [<options>]
    -B (FULL_BATCH): full batch mode(triplet_loss only)
    -v <options>: enable verbose output
       k: keras output
-      t: triplet output
+      t: triple loss output
+      T: simple triple loss output
 """)
 
 
