@@ -5,6 +5,7 @@ import os
 import getopt
 
 import logger
+import img_load
 import dl_dna_model
 import triplet_model
 import mobilenet
@@ -46,7 +47,7 @@ def _setup_envs():
     if 'N_UNITS' in os.environ:
         dl_dna_model.n_units = int(os.environ['N_UNITS'])
     if 'IMAGE_FOLDER' in os.environ:
-        dl_dna_model.image_fpath = os.environ['IMAGE_FOLDER']
+        img_load.image_fpath = os.environ['IMAGE_FOLDER']
     if 'EPOCHS' in os.environ:
         dl_dna_model.epochs = int(os.environ['EPOCHS'])
     if 'SEED' in os.environ:
@@ -73,7 +74,7 @@ def _parse_args():
         if o == '-t':
             fpath_train = a
         elif o == '-f':
-            dl_dna_model.image_fpath = a
+            img_load.image_fpath = a
         elif o == '-s':
             path_save = a
         elif o == '-l':

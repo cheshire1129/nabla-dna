@@ -1,15 +1,12 @@
 import numpy as np
-import os
 import random
 from abc import ABC, abstractmethod
-from keras.preprocessing import image
 from scipy import spatial
 
+import img_load
 
-import logger
 from lineEnumerator import LineEnumerator
 
-image_fpath: str = ""
 n_units = 64
 epochs = 2
 seed = 0
@@ -36,7 +33,7 @@ class DlDnaModel(ABC):
         pass
 
     def _get_dna(self, img_name):
-        imgdata = load_img_data(img_name)
+        imgdata = img_load.load_img_data(img_name)
         return self.extract_dna(np.array([imgdata]))
 
     def _get_similarity(self, img_name1, img_name2):
@@ -67,21 +64,3 @@ class DlDnaModel(ABC):
     def load(self, path_load: str):
         print("loading model is not supported")
         exit(1)
-
-
-def _load_img_data_with_ext(name):
-    img_path = os.path.join(image_fpath, name) if image_fpath else name
-    if os.path.exists(img_path):
-        img = image.load_img(img_path, target_size=(224, 224))
-        if img is not None:
-            return image.img_to_array(img)
-    return None
-
-
-def load_img_data(name):
-    for ext in ['bmp', 'jpg', 'png']:
-        img = _load_img_data_with_ext(name + '.' + ext)
-        if img is not None:
-            return img
-    logger.error("cannot load image data: not found: " + name)
-    exit(1)

@@ -12,6 +12,7 @@ from tensorflow.keras.callbacks import EarlyStopping
 
 import numpy as np
 
+import img_load
 import dl_dna_model
 from lineEnumerator import LineEnumerator
 
@@ -60,7 +61,7 @@ class ModelTriplet(dl_dna_model.DlDnaModel):
         images = []
         for triplet in triples:
             for name in triplet:
-                images.append(dl_dna_model.load_img_data(name))
+                images.append(img_load.load_img_data(name))
         return np.array(images)
 
     def _train_triplet_model(self, triples):
