@@ -8,6 +8,7 @@ import logger
 import img_load
 import dl_dna_model
 import triplet_model
+import autoencoder_model
 import mobilenet
 
 model_type = 'triplet_loss'
@@ -25,7 +26,7 @@ Usage: dl-dna.py [<options>]
                              <image pair file>: get similarities
    <options>
    -h: help(this message)
-   -m <model>: triplet_loss(default), mobilenet
+   -m <model>: triplet_loss(default), mobilenet, autoencoder
    -t <training file>: training mode with file path
        triplet_loss: image list with triple fields
        mobilenet: not supported
@@ -94,6 +95,8 @@ def _parse_args():
 def get_dl_dna_model():
     if model_type == 'triplet_loss':
         return triplet_model.ModelTriplet()
+    elif model_type == 'autoencoder':
+        return autoencoder_model.AutoEncoder()
     return mobilenet.ModelMobileNet()
 
 
