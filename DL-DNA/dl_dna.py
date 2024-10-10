@@ -36,7 +36,7 @@ Usage: dl-dna.py [<options>]
    -f <image folder> (IMAGE_FOLDER)
    -e <epochs> (EPOCHS)
    -S <seed> (SEED): random seed for deterministic run
-   -B (FULL_BATCH): full batch mode(triplet_loss only)
+   -b <batch_size>: 0 means full batch
    -v <options>: enable verbose output
       k: keras output
       t: triple loss output
@@ -61,7 +61,7 @@ def _parse_args():
     global model_type, fpath_train, args, path_save, path_load
 
     try:
-        opts, args = getopt.getopt(sys.argv[1:], "hm:t:f:s:l:u:e:S:Bv:")
+        opts, args = getopt.getopt(sys.argv[1:], "hm:t:f:s:l:u:e:S:b:v:")
     except getopt.GetoptError:
         logger.error("invalid option")
         _usage_dl_dna()
@@ -86,8 +86,8 @@ def _parse_args():
             dl_dna_model.epochs = int(a)
         elif o == '-S':
             dl_dna_model.seed = int(a)
-        elif o == '-B':
-            triplet_model.full_batch = True
+        elif o == '-b':
+            dl_dna_model.batch_size = int(a)
         elif o == '-v':
             dl_dna_model.verbose = a
 

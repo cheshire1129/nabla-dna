@@ -9,6 +9,7 @@ from lineEnumerator import LineEnumerator
 
 n_units = 64
 epochs = 2
+batch_size = 32
 seed = 0
 verbose = ""
 

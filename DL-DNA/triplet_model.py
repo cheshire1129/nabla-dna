@@ -16,8 +16,6 @@ import img_load
 import dl_dna_model
 from lineEnumerator import LineEnumerator
 
-full_batch = False
-
 
 def _triplet_loss(_y_true, y_pred, alpha=0.4):
     losses = []
@@ -65,12 +63,10 @@ class ModelTriplet(dl_dna_model.DlDnaModel):
         return np.array(images)
 
     def _train_triplet_model(self, triples):
-        global full_batch
-
         images = self._load_triplets(triples)
         dummy_y = np.ones((images.shape[0],))
 
-        batch_size = 3 if not full_batch else None
+        batch_size = 3 if dl_dna_model.batch_size != 0 else len(images)
         early_stopping = EarlyStopping(monitor='loss', patience=10, restore_best_weights=True)
         self.dl_model.fit(x=images, y=dummy_y, batch_size=batch_size, epochs=dl_dna_model.epochs,
                           shuffle=False, callbacks=[early_stopping], verbose=self.verbose_level)

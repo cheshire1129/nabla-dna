@@ -44,11 +44,11 @@ class AutoEncoder(dl_dna_model.DlDnaModel):
         x = UpSampling2D((2, 2))(x)
         x = Conv2D(64, (3, 3), activation='relu', padding='same')(x)
         x = UpSampling2D((2, 2))(x)
-        decoded = Conv2D(3, (3, 3), activation='sigmoid', padding='same')(x)
+        decoded = Conv2D(3, (3, 3), activation='relu', padding='same')(x)
 
         self.dl_model = Model(input_layer, decoded)
         optimizer = Adam(learning_rate=0.001)
-        self.dl_model.compile(optimizer=optimizer, loss='binary_crossentropy', metrics=['accuracy'])
+        self.dl_model.compile(optimizer=optimizer, loss='mean_squared_error', metrics=['accuracy'])
 
         self.encoder = Model(input_layer, encoded)
 
@@ -65,7 +65,9 @@ class AutoEncoder(dl_dna_model.DlDnaModel):
         lines = LineEnumerator(fpath_train)
         images = self._load_images(lines)
 
-        self.dl_model.fit(images, images, epochs=dl_dna_model.epochs, verbose=self.verbose_level)
+        batch_size = dl_dna_model.batch_size if dl_dna_model.batch_size != 0 else len(images)
+        self.dl_model.fit(images, images, epochs=dl_dna_model.epochs, batch_size=batch_size,
+                          verbose=self.verbose_level)
 
     def extract_dna(self, data):
         return self.encoder.predict(data, verbose=self.verbose_level)[0]
@@ -75,3 +77,4 @@ class AutoEncoder(dl_dna_model.DlDnaModel):
 
     def load(self, path_load: str):
         self.dl_model = load_model(path_load)
+        self.encoder = Model(self.dl_model.input, self.dl_model.layers[8].output)
