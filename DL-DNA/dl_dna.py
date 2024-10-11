@@ -10,6 +10,7 @@ import dl_dna_model
 import triplet_model
 import autoencoder_model
 import mobilenet
+import vgg
 
 model_type = 'triplet_loss'
 fpath_train: str = ""
@@ -97,7 +98,12 @@ def get_dl_dna_model():
         return triplet_model.ModelTriplet()
     elif model_type == 'autoencoder':
         return autoencoder_model.AutoEncoder()
-    return mobilenet.ModelMobileNet()
+    elif model_type == 'mobilenet':
+        return mobilenet.ModelMobileNet()
+    elif model_type == 'vgg':
+        return vgg.VGG()
+    print(f"invalid model type: {model_type}")
+    exit(1)
 
 
 if __name__ == "__main__":
