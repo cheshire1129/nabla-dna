@@ -1,3 +1,5 @@
 Pillow
 numpy
 scipy
+opencv-python
+opencv-python-headless
