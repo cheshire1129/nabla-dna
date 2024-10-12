@@ -9,6 +9,7 @@ import logger
 import img_load
 
 import sift
+import orb
 
 model_type = 'sift'
 args = None
@@ -22,7 +23,9 @@ Usage: img_dna.py [<options>]
                              <image pair file>: get similarities
    <options>
    -h: help(this message)
-   -m <model>: sift
+   -m <model>: sift, orb
+   -X: converts the image to grayscale
+   -x <resolution>: image is resized to the specified resolution after loading
    -f <image folder> (IMAGE_FOLDER)
 """)
 
@@ -36,7 +39,7 @@ def _parse_args():
     global model_type, args
 
     try:
-        opts, args = getopt.getopt(sys.argv[1:], "hm:")
+        opts, args = getopt.getopt(sys.argv[1:], "hm:Xx:")
     except getopt.GetoptError:
         logger.error("invalid option")
         _usage_dl_dna()
@@ -45,13 +48,19 @@ def _parse_args():
         if o == '-h':
             _usage_dl_dna()
             exit(0)
-        if o == '-m':
+        elif o == '-m':
             model_type = a
+        elif o == '-X':
+            img_load.grayscaled = True
+        elif o == '-x':
+            img_load.resized = int(a)
 
 
 def get_img_dna_model():
     if model_type == 'sift':
         return sift.SIFT()
+    elif model_type == 'orb':
+        return orb.ORB()
     print(f"invalid model type: {model_type}")
     exit(1)
 
