@@ -73,9 +73,10 @@ if __name__ == "__main__":
     model = get_img_dna_model()
 
     if len(args) > 0:
-        if os.path.isfile(args[0]):
-            model.show_similarities(args[0])
-        elif len(args) == 1:
-            model.show_dna(args[0])
+        if len(args) == 1:
+            if os.path.isfile(args[0]):
+                model.show_similarities(args[0])
+            else:
+                model.show_dna(args[0])
         else:
             model.show_similarity(args[0], args[1])

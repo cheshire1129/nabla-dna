@@ -33,7 +33,7 @@ def _usage_showbmp():
 Usage: showbmp.py <image path>
    <options>
    -h: help(this message)
-   -x <resolution>: DNA resolution (default: 4)
+   -x <resolution>: DNA resolution (default: 4) or image resolution(bitmap mode and should be larger than 64)
    -d <depth>: DNA depth bit(default and max: 8)
    -m <mode>: bitmap, averaged, rotated, nabla
    -r: show as raw texts
@@ -61,6 +61,8 @@ def _show_bitmap_matrix_window(bmp: NablaBitmap):
             for i in range(scaled):
                 for j in range(scaled):
                     im.putpixel((w * scaled + i, h * scaled + j), int(bmp.bmp_dna[h][w]))
+    if bmp.dna_resolution > 64:
+        im = im.resize((bmp.dna_resolution, bmp.dna_resolution))
     im.show('Bitmap Matrix')
 
 
