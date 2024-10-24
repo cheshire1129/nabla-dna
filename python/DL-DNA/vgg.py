@@ -1,5 +1,6 @@
 import numpy as np
 from keras.applications import VGG16
+from scipy import spatial
 
 import dl_dna_model
 
@@ -23,6 +24,18 @@ class VGG(dl_dna_model.DlDnaModel):
         dna = []
         start = 0
         for i in range(dl_dna_model.n_units):
-            dna.append(np.mean(res[0, start: start + cnt_avg]) * cnt_avg)
+            dna.append(np.mean(res[0, start: start + cnt_avg]))
             start += cnt_avg
         return np.array(dna)
+
+    def _get_distance(self, dna1, dna2):
+        threshold = dl_dna_model.threshold
+        if threshold is None:
+            return 2 * super()._get_distance(dna1, dna2)
+        cond = (dna1 > threshold) | (dna2 > threshold)
+        dna1 = dna1[cond]
+        dna2 = dna2[cond]
+
+        if dna1.size == 0:
+            return 2
+        return 2 * spatial.distance.cosine(dna1, dna2)
