@@ -10,6 +10,7 @@ from lineEnumerator import LineEnumerator
 n_units = 64
 epochs = 2
 batch_size = 32
+threshold = None
 seed = 0
 verbose = ""
 
@@ -37,10 +38,13 @@ class DlDnaModel(ABC):
         imgdata = img_load.load_img_data(img_name)
         return self.extract_dna(np.array([imgdata]))
 
+    def _get_distance(self, dna1, dna2):
+        return spatial.distance.cosine(dna1, dna2)
+
     def _get_similarity(self, img_name1, img_name2):
         dna1 = self._get_dna(img_name1)
         dna2 = self._get_dna(img_name2)
-        return 1 - spatial.distance.cosine(dna1, dna2)
+        return 1 - self._get_distance(dna1, dna2)
 
     def show_dna(self, img_name):
         dna = self._get_dna(img_name)

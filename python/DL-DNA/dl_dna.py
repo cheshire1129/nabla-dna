@@ -31,6 +31,8 @@ Usage: dl-dna.py [<options>]
    -t <training file>: training mode with file path
        triplet_loss: image list with triple fields
        mobilenet: not supported
+   -T <threshold>: threshold for model
+      mobilenet: minimum value of vector elements to be included in vector distance calculation
    -s <path for save>: path for saving model
    -l <path for load>: path for loading model
    -u <units>: unit count for embedding vector (N_UNITS: env variable)
@@ -62,7 +64,7 @@ def _parse_args():
     global model_type, fpath_train, args, path_save, path_load
 
     try:
-        opts, args = getopt.getopt(sys.argv[1:], "hm:t:f:s:l:u:e:S:b:v:")
+        opts, args = getopt.getopt(sys.argv[1:], "hm:t:T:f:s:l:u:e:S:b:v:")
     except getopt.GetoptError:
         logger.error("invalid option")
         _usage_dl_dna()
@@ -75,6 +77,8 @@ def _parse_args():
             model_type = a
         if o == '-t':
             fpath_train = a
+        if o == '-T':
+            dl_dna_model.threshold = float(a)
         elif o == '-f':
             img_load.image_fpath = a
         elif o == '-s':
