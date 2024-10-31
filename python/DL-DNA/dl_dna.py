@@ -27,16 +27,18 @@ Usage: dl-dna.py [<options>]
                              <image pair file>: get similarities
    <options>
    -h: help(this message)
-   -m <model>: triplet_loss(default), mobilenet, autoencoder
+   -m <model>: triplet_loss(default), mobilenet, vgg, autoencoder
    -t <training file>: training mode with file path
        triplet_loss: image list with triple fields
-       mobilenet: not supported
+       autoencoder: image list
+       mobilenet, vgg: not supported
    -T <threshold>: threshold for model
       mobilenet: minimum value of vector elements to be included in vector distance calculation
    -s <path for save>: path for saving model
    -l <path for load>: path for loading model
    -u <units>: unit count for embedding vector (N_UNITS: env variable)
    -f <image folder> (IMAGE_FOLDER)
+   -o <output image>: decoded image path(autoencoder only)
    -e <epochs> (EPOCHS)
    -S <seed> (SEED): random seed for deterministic run
    -b <batch_size>: 0 means full batch
@@ -64,7 +66,7 @@ def _parse_args():
     global model_type, fpath_train, args, path_save, path_load
 
     try:
-        opts, args = getopt.getopt(sys.argv[1:], "hm:t:T:f:s:l:u:e:S:b:v:")
+        opts, args = getopt.getopt(sys.argv[1:], "hm:t:T:f:s:l:u:o:e:S:b:v:")
     except getopt.GetoptError:
         logger.error("invalid option")
         _usage_dl_dna()
@@ -87,6 +89,8 @@ def _parse_args():
             path_load = a
         elif o == '-u':
             dl_dna_model.n_units = int(a)
+        elif o == '-o':
+            autoencoder_model.path_decoded_image = a
         elif o == '-e':
             dl_dna_model.epochs = int(a)
         elif o == '-S':

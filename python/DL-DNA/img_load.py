@@ -26,3 +26,7 @@ def load_img(name):
 def load_img_data(name):
     img = load_img(name)
     return image.img_to_array(img)
+
+
+def save_img(path, data):
+    image.save_img(path, data)
