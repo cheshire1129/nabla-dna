@@ -8,6 +8,7 @@ import getopt
 import logger
 import img_load
 
+import img_dna_model
 import sift
 import orb
 
@@ -26,6 +27,9 @@ Usage: img_dna.py [<options>]
    -m <model>: sift, orb
    -X: converts the image to grayscale
    -x <resolution>: image is resized to the specified resolution after loading
+   -T <threshold>: threshold for algorithm if any
+   -s <similarity>: similarity option for each algorithm
+       sift: matching(default), distance
    -f <image folder> (IMAGE_FOLDER)
 """)
 
@@ -39,7 +43,7 @@ def _parse_args():
     global model_type, args
 
     try:
-        opts, args = getopt.getopt(sys.argv[1:], "hm:Xx:")
+        opts, args = getopt.getopt(sys.argv[1:], "hm:Xx:T:s:")
     except getopt.GetoptError:
         logger.error("invalid option")
         _usage_dl_dna()
@@ -54,6 +58,10 @@ def _parse_args():
             img_load.grayscaled = True
         elif o == '-x':
             img_load.resized = int(a)
+        elif o == '-T':
+            img_dna_model.threshold = float(a)
+        elif o == '-s':
+            img_dna_model.similarity_type = a
 
 
 def get_img_dna_model():

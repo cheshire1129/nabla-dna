@@ -8,6 +8,8 @@ import img_load
 from lineEnumerator import LineEnumerator
 
 verbose = ""
+threshold = None
+similarity_type = None
 
 
 class ImgDnaModel(ABC):

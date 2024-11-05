@@ -4,6 +4,10 @@ import numpy as np
 import img_dna_model
 
 
+def logistic(x):
+  return 1 / (1 + np.exp(-x))
+
+
 class ORB(img_dna_model.ImgDnaModel):
     def __init__(self):
         super().__init__()
@@ -23,13 +27,18 @@ class ORB(img_dna_model.ImgDnaModel):
 
         # matching ratio is not used
         matching_ratio = len(matches) / min(len(dna1), len(dna2))
-        matches = sorted(matches, key=lambda x: x.distance)
+        if img_dna_model.similarity_type == 'distance':
+            matches = sorted(matches, key=lambda x: x.distance)
 
-        if len(matches) > 0:
-            avg_distance = np.mean([m.distance for m in matches])
+            if len(matches) > 0:
+                avg_distance = np.mean([m.distance for m in matches])
+            else:
+                avg_distance = float('inf')  # 매칭이 없을 경우
+
+            max_distance = 200
+            distance_similarity = max(1 - (avg_distance / max_distance), 0)
         else:
-            avg_distance = float('inf')  # 매칭이 없을 경우
-
-        max_distance = 200
-        distance_similarity = max(1 - (avg_distance / max_distance), 0)
+            matching_ratio = len(matches) / min(len(dna1), len(dna2))
+            scale = 40 if matching_ratio < 0.1 else 5
+            return 2 * logistic((matching_ratio - 0.1) * scale) - 1
         return distance_similarity
