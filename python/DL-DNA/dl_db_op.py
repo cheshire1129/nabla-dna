@@ -1,4 +1,5 @@
 import os
+import time
 import numpy as np
 
 import vdb
@@ -15,9 +16,16 @@ def create_vdb(path):
 def _add_dna_from_file(model, path):
     list_dna = []
     lines = LineEnumerator(path)
+    start = time.perf_counter()
     for img_name in lines:
         list_dna.append(model.get_dna(img_name))
+    elapsed = time.perf_counter() - start
+    print(f"dna extraction time: {elapsed:.6f} sec")
+
+    start = time.perf_counter()
     _vdb.insert_multi(list_dna)
+    elapsed = time.perf_counter() - start
+    print(f"vdb insert time: {elapsed:.6f} sec")
 
 def add_dna(model, path_or_name):
     if os.path.isfile(path_or_name):
