@@ -34,7 +34,7 @@ class DlDnaModel(ABC):
     def extract_dna(self, data):
         pass
 
-    def _get_dna(self, img_name):
+    def get_dna(self, img_name):
         imgdata = img_load.load_img_data(img_name)
         return self.extract_dna(np.array([imgdata]))
 
@@ -42,12 +42,12 @@ class DlDnaModel(ABC):
         return spatial.distance.cosine(dna1, dna2)
 
     def _get_similarity(self, img_name1, img_name2):
-        dna1 = self._get_dna(img_name1)
-        dna2 = self._get_dna(img_name2)
+        dna1 = self.get_dna(img_name1)
+        dna2 = self.get_dna(img_name2)
         return 1 - self._get_distance(dna1, dna2)
 
     def show_dna(self, img_name):
-        dna = self._get_dna(img_name)
+        dna = self.get_dna(img_name)
         print(f"{dna}")
 
     def show_similarity(self, img_name1, img_name2):

@@ -7,10 +7,7 @@ import getopt
 import logger
 import img_load
 import dl_dna_model
-import triplet_model
-import autoencoder_model
-import mobilenet
-import vgg
+import dl_dna_model_get
 
 model_type = 'triplet_loss'
 fpath_train: str = ""
@@ -100,26 +97,12 @@ def _parse_args():
         elif o == '-v':
             dl_dna_model.verbose = a
 
-
-def get_dl_dna_model():
-    if model_type == 'triplet_loss':
-        return triplet_model.ModelTriplet()
-    elif model_type == 'autoencoder':
-        return autoencoder_model.AutoEncoder()
-    elif model_type == 'mobilenet':
-        return mobilenet.ModelMobileNet()
-    elif model_type == 'vgg':
-        return vgg.VGG()
-    print(f"invalid model type: {model_type}")
-    exit(1)
-
-
 if __name__ == "__main__":
     logger.init("dl_dna")
 
     _setup_envs()
     _parse_args()
-    model = get_dl_dna_model()
+    model = dl_dna_model_get.get_dl_dna_model(model_type)
     if path_load:
         model.load(path_load)
     if fpath_train:
