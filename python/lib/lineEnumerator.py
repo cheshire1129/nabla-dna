@@ -1,5 +1,4 @@
-import logger
-
+from lib import logger
 
 class LineEnumerator:
     def __init__(self, fpath: str, need_split=False):

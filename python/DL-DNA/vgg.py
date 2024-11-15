@@ -17,6 +17,8 @@ class VGG(dl_dna_model.DlDnaModel):
         exit(1)
 
     def extract_dna(self, data):
+        if data.ndim == 3:
+            data = data[None, :]
         res = self.dl_model.predict(data, verbose=self.verbose_level)
         # 1000 is the number of VGG classes
         # ASSUME: n_units is divisor of 1000

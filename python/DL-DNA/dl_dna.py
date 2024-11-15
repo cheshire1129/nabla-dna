@@ -4,8 +4,7 @@ import sys
 import os
 import getopt
 
-import logger
-import img_load
+from lib import logger
 import dl_dna_model
 import dl_dna_model_get
 
@@ -56,6 +55,7 @@ def _setup_envs():
     if 'SEED' in os.environ:
         dl_dna_model.seed = int(os.environ['SEED'])
     if 'FULL_BATCH' in os.environ:
+        import triplet_model
         triplet_model.full_batch = True
 
 
@@ -87,6 +87,7 @@ def _parse_args():
         elif o == '-u':
             dl_dna_model.n_units = int(a)
         elif o == '-o':
+            import autoencoder_model
             autoencoder_model.path_decoded_image = a
         elif o == '-e':
             dl_dna_model.epochs = int(a)
@@ -97,7 +98,11 @@ def _parse_args():
         elif o == '-v':
             dl_dna_model.verbose = a
 
+
 if __name__ == "__main__":
+    from dna import img_load
+    img_load.resized = 224
+
     logger.init("dl_dna")
 
     _setup_envs()

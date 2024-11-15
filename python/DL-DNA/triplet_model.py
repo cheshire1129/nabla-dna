@@ -12,9 +12,9 @@ from tensorflow.keras.callbacks import EarlyStopping
 
 import numpy as np
 
-import img_load
+from dna import img_load
+from lib.lineEnumerator import LineEnumerator
 import dl_dna_model
-from lineEnumerator import LineEnumerator
 
 
 def _triplet_loss(_y_true, y_pred, alpha=0.4):
@@ -76,6 +76,8 @@ class ModelTriplet(dl_dna_model.DlDnaModel):
         self._train_triplet_model(triples)
 
     def extract_dna(self, data):
+        if data.ndim == 3:
+            data = data[None, :]
         return self.dl_model.predict(data, verbose=self.verbose_level)[0]
 
     def save(self, path_save: str):

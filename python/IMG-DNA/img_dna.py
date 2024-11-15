@@ -5,12 +5,11 @@ import os
 
 import getopt
 
-import logger
-import img_load
+from lib import logger
+from dna import img_load
 
 import img_dna_model
-import sift
-import orb
+import img_dna_model_get
 
 model_type = 'sift'
 args = None
@@ -63,22 +62,12 @@ def _parse_args():
         elif o == '-s':
             img_dna_model.similarity_type = a
 
-
-def get_img_dna_model():
-    if model_type == 'sift':
-        return sift.SIFT()
-    elif model_type == 'orb':
-        return orb.ORB()
-    print(f"invalid model type: {model_type}")
-    exit(1)
-
-
 if __name__ == "__main__":
     logger.init("img_dna")
 
     _setup_envs()
     _parse_args()
-    model = get_img_dna_model()
+    model = img_dna_model_get.get_img_dna_model(model_type)
 
     if len(args) > 0:
         if len(args) == 1:

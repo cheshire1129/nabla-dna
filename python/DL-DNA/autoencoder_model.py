@@ -14,9 +14,9 @@ from scipy import spatial
 
 import numpy as np
 
-import img_load
+from dna import img_load
+from lib.lineEnumerator import LineEnumerator
 import dl_dna_model
-from lineEnumerator import LineEnumerator
 
 full_batch = False
 path_decoded_image = None
@@ -81,6 +81,8 @@ class AutoEncoder(dl_dna_model.DlDnaModel):
     def extract_dna(self, data):
         global path_decoded_image
 
+        if data.ndim == 3:
+            data = data[None, :]
         data = data / 255.
         if path_decoded_image:
             img_load.save_img(path_decoded_image, self.dl_model.predict(data)[0] * 255.)

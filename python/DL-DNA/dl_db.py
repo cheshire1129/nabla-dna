@@ -4,18 +4,19 @@ import sys
 import os
 import getopt
 
-import logger
-import img_load
+from lib import logger
+from dna import dna_db
 import dl_dna_model
 import dl_dna_model_get
-
-import dl_db_op
 
 model_type = 'autoencoder'
 add_mode = False
 fpath_train: str = ""
 path_model: str = ""
-args = None
+args = []
+
+dna_db = dna_db.DnaDb()
+
 
 def _usage_dl_db():
     print("""\
@@ -62,15 +63,19 @@ def _parse_args():
         elif o == '-l':
             path_model = a
         elif o == '-d':
-            dl_db_op.load_vdb(a)
+            dna_db.load(a)
         elif o == '-D':
-            dl_db_op.create_vdb(a)
+            dna_db.create(a)
         elif o == '-u':
             dl_dna_model.n_units = int(a)
         elif o == '-v':
             dl_dna_model.verbose = a
 
+
 if __name__ == "__main__":
+    from dna import img_load
+    img_load.resized = 224
+
     logger.init("dl_db")
 
     _setup_envs()
@@ -83,6 +88,6 @@ if __name__ == "__main__":
         _usage_dl_db()
         exit(1)
     if add_mode:
-        dl_db_op.add_dna(model, args[0])
+        dna_db.add(model, args[0])
     else:
-        dl_db_op.search_dna(model, args[0])
+        dna_db.search(model, args[0])

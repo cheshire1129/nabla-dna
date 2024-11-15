@@ -3,8 +3,8 @@
 import sys
 import os
 import getopt
-import logger
-import img_load
+from lib import logger
+from dna import img_load
 
 
 img_name: str = ""
@@ -26,8 +26,7 @@ def _setup_envs():
 
 
 def _show_img():
-    img = img_load.load_img(img_name)
-    img.show()
+    img_load.show_img(img_name)
 
 
 def _parse_args():

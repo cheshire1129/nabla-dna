@@ -10,19 +10,21 @@ class Vdb:
     def load(self, path):
         self.path = path
         self.index = faiss.read_index(path)
-        print("Read")
 
-    def create(self, path):
+    def create(self, path: str):
         self.path = path
+
+    def _create_index(self, vec_size):
+        self.index = faiss.IndexFlatL2(vec_size)
 
     def insert(self, dna):
         if self.index is None:
-            self.index = faiss.IndexFlatL2(len(dna))
-        self.index.add(np.array([dna]))
+            self._create_index(len(dna))
+        self.index.add(dna[None, :])
 
     def insert_multi(self, list_dna):
         if self.index is None:
-            self.index = faiss.IndexFlatL2(len(list_dna[0]))
+            self._create_index(len(list_dna[0]))
         self.index.add(np.array(list_dna))
 
     def search(self, dna):
