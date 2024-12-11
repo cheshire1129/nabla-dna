@@ -29,6 +29,7 @@ Usage: img_db.py [<options>]  <image name>: add or search image DNA
    -m <model>: sift, orb
    -d <db path>: dna DB path(if existing)
    -D <db path>: create a new DB
+   -t <threshold>: threshold for multi search
    -f <image folder> (IMAGE_FOLDER)
 """)
 
@@ -42,7 +43,7 @@ def _parse_args():
     global model_type, args, add_mode
 
     try:
-        opts, args = getopt.getopt(sys.argv[1:], "hAm:d:D:")
+        opts, args = getopt.getopt(sys.argv[1:], "hAm:d:t:D:")
     except getopt.GetoptError:
         logger.error("invalid option")
         _usage_img_db()
@@ -57,6 +58,8 @@ def _parse_args():
             model_type = a
         elif o == '-d':
             img_dna_db.load(a)
+        elif o == '-t':
+            img_dna_db.threshold = float(a)
         elif o == '-D':
             img_dna_db.create(a)
 

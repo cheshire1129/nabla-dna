@@ -9,6 +9,7 @@ from lib.lineEnumerator import LineEnumerator
 
 class DnaDb:
     def __init__(self, _vdb: vdb.Vdb = None):
+        self.threshold = None
         if _vdb is None:
             _vdb = vdb.Vdb()
         self.vdb = _vdb
@@ -45,7 +46,22 @@ class DnaDb:
         lines = LineEnumerator(path)
         for img_name in lines:
             list_dna.append(model.get_dna(img_name))
-        self.vdb.search_multi(np.array(list_dna))
+        start = time.perf_counter()
+        dists, ids = self.vdb.search_multi(list_dna)
+        elapsed = time.perf_counter() - start
+        print(f"dna search time: {elapsed:.6f} sec")
+        if self.threshold:
+            indices = np.where(dists <= self.threshold)
+            ratio = len(indices[0]) / len(list_dna) * 100
+            print(f"matched ratio: {ratio:.2f}")
+            print("matched id:")
+            no = 0
+            for idr in ids[indices[0]]:
+                matched = indices[0][no]
+                print(f"{matched}: {idr[0]}")
+                no += 1
+        else:
+            print(dists, ids)
 
     def search(self, model: dna_model.DnaModel, path_or_name):
         if os.path.isfile(path_or_name):

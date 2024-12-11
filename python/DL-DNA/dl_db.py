@@ -15,7 +15,7 @@ fpath_train: str = ""
 path_model: str = ""
 args = []
 
-dna_db = dna_db.DnaDb()
+dl_dna_db = dna_db.DnaDb()
 
 
 def _usage_dl_db():
@@ -31,6 +31,7 @@ Usage: dl_db.py [<options>]  <image name>: add or search image DNA
    -D <db path>: create a new DB
    -f <image folder> (IMAGE_FOLDER)
    -u <units>: unit count for embedding vector
+   -t <threshold>: threshold for multi search
    -v <options>: enable verbose output
       k: keras output
       t: triple loss output
@@ -63,11 +64,13 @@ def _parse_args():
         elif o == '-l':
             path_model = a
         elif o == '-d':
-            dna_db.load(a)
+            dl_dna_db.load(a)
         elif o == '-D':
-            dna_db.create(a)
+            dl_dna_db.create(a)
         elif o == '-u':
             dl_dna_model.n_units = int(a)
+        elif o == '-t':
+            dl_dna_db.threshold = float(a)
         elif o == '-v':
             dl_dna_model.verbose = a
 
@@ -88,6 +91,6 @@ if __name__ == "__main__":
         _usage_dl_db()
         exit(1)
     if add_mode:
-        dna_db.add(model, args[0])
+        dl_dna_db.add(model, args[0])
     else:
-        dna_db.search(model, args[0])
+        dl_dna_db.search(model, args[0])

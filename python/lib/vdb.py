@@ -29,11 +29,11 @@ class Vdb:
 
     def search(self, dna):
         dist, searched = self.index.search(dna[None, :], 1)
-        print(dist, searched)
+        return dist, searched
 
     def search_multi(self, list_dna):
-        dist, searched = self.index.search(list_dna, 1)
-        print(dist, searched)
+        dist, searched = self.index.search(np.array(list_dna), 1)
+        return dist, searched
 
     def save(self):
         if self.index and self.path:

@@ -41,7 +41,15 @@ class ImgVdb(vdb.Vdb):
             else:
                 dna_refs[dna_id] = 1
         max_dna_id = max(dna_refs, key=dna_refs.get)
-        print(max_dna_id)
+        ratio = 1 - dna_refs[max_dna_id] / len(searched)
+        return [ratio], [max_dna_id]
+
+    def search_multi(self, list_dna):
+        res = []
+        for dna in list_dna:
+            res.append(self.search(dna))
+        ratios, ids = zip(*res)
+        return np.array(list(ratios)), np.array(list(ids))
 
     def save(self):
         if self.index and self.path:
