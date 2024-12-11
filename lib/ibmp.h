@@ -3,11 +3,9 @@
 
 #include <stdbool.h>
 
-/* This code is referenced from https://github.com/draekko/libbitmap */
-
 /* intensity bitmap */
 typedef struct {
-	int	width, height;
+	int	width, height, channels;
 	float	*pixels;
 } ibmp_t;
 

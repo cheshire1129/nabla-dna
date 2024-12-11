@@ -132,9 +132,9 @@ normalize_bmp(xbmp_t *rbmp)
 	vmax = vmin = rbmp->pixels[0];
 	for (i = 1; i < n_pixels; i++) {
 		if (rbmp->pixels[i] < vmin)
-			vmin = pixels[i];
+			vmin = rbmp->pixels[i];
 		else if (rbmp->pixels[i] > vmax)
-			vmax = pixels[i];
+			vmax = rbmp->pixels[i];
 	}
 	if (vmin == vmax) {
 		for (i = 0; i < n_pixels; i++)
