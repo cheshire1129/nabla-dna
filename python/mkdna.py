@@ -5,7 +5,7 @@ import os
 import getopt
 import glob
 
-import logger
+from lib import logger
 from nbmp import NablaBitmap
 from pairs import Pairs
 

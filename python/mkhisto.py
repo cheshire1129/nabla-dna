@@ -3,7 +3,7 @@
 import sys
 import os
 import getopt
-import logger
+from lib import logger
 from nbmp import NablaBitmap
 import pis
 import histo

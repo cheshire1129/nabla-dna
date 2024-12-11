@@ -1,4 +1,4 @@
-import logger
+from lib import logger
 
 
 class Pairs:

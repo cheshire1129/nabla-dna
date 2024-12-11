@@ -4,7 +4,7 @@ import sys
 from PIL import Image
 import getopt
 from enum import Enum
-import logger
+from lib import logger
 from nbmp import NablaBitmap
 
 DNA_RESOLUTION_DEFAULT = 4

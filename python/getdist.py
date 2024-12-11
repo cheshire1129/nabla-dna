@@ -5,7 +5,7 @@ import os
 import getopt
 import glob
 
-import logger
+from lib import logger
 from pis import PIS
 from hst import HST
 import dist
