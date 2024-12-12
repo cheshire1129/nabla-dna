@@ -7,6 +7,7 @@
 
 #include "ibmp.h"
 #include "nabla_dna.h"
+#include "util.h"
 
 static int	size = 4;
 static const char	*imgpath;
@@ -22,21 +23,6 @@ usage(void)
 "   -s <size>: dna size (default: 4)\n"
 "   -o <output>: save dna as text\n"
 		);
-}
-
-void
-errmsg(const char *fmt, ...)
-{
-        va_list ap;
-        char    *errmsg;
-
-        va_start(ap, fmt);
-        vasprintf(&errmsg, fmt, ap);
-        va_end(ap);
-
-        fprintf(stderr, "ERROR: %s\n", errmsg);
-
-        free(errmsg);
 }
 
 static void
