@@ -9,9 +9,9 @@ typedef struct {
 	float	*pixels;
 } xbmp_t;
 
-xbmp_t *build_nabla_bmp(ibmp_t *ibmp, int dna_size);
+xbmp_t *build_nabla_bmp(ibmp_t *ibmp, int dna_resol);
 void free_xbmp(xbmp_t *xbmp);
 
-int get_n_nabla_pixels(int dna_size);
+int get_n_nabla_pixels(int dna_resol);
 
 #endif

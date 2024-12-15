@@ -18,19 +18,19 @@ typedef struct _node {
 } rdx_node_t;
 
 typedef struct {
+	int	resol_rdx, resol_dna;
 	int	size_rdx, size_dna;
-	int	nsize_rdx, nsize_dna;
 	rdx_node_t	*root;
 	void *dnas;
 } ndb_t;
 
 void
-ndb_get_sizes(void *_ndb, int *psize_rdx, int *psize_dna)
+ndb_get_resols(void *_ndb, int *presol_rdx, int *presol_dna)
 {
 	ndb_t	*ndb = (ndb_t *)_ndb;
 
-	*psize_rdx = ndb->size_rdx;
-	*psize_dna = ndb->size_dna;
+	*presol_rdx = ndb->resol_rdx;
+	*presol_dna = ndb->resol_dna;
 }
 
 static rdx_node_t *
@@ -61,7 +61,7 @@ free_node(rdx_node_t *node)
 }
 
 void *
-ndb_create(int size_rdx, int size_dna)
+ndb_create(int resol_rdx, int resol_dna)
 {
 	ndb_t	*ndb;
 
@@ -69,12 +69,12 @@ ndb_create(int size_rdx, int size_dna)
 	if (ndb == NULL)
 		return NULL;
 
-	ndb->size_rdx = size_rdx;
-	ndb->size_dna = size_dna;
-	ndb->nsize_rdx = get_n_nabla_pixels(size_rdx);
-	ndb->nsize_dna = get_n_nabla_pixels(size_dna);
+	ndb->resol_rdx = resol_rdx;
+	ndb->resol_dna = resol_dna;
+	ndb->size_rdx = get_n_nabla_pixels(resol_rdx);
+	ndb->size_dna = get_n_nabla_pixels(resol_dna);
 	ndb->root = create_node(0);
-	ndb->dnas = dynarray_create(size_dna, DNAS_CHUNKSIZE);
+	ndb->dnas = dynarray_create(ndb->size_dna, DNAS_CHUNKSIZE);
 
 	return ndb;
 }
@@ -95,7 +95,7 @@ ndb_insert(void *_ndb, unsigned char *dna_rdx, unsigned char *dna)
 	rdx_node_t	*cur = ndb->root;
 	unsigned int	id_dna;
 
-	for (int i = 0; i < ndb->nsize_rdx; i++) {
+	for (int i = 0; i < ndb->size_rdx; i++) {
 		unsigned char	dbyte = dna_rdx[i];
 
 		if (cur->children[dbyte] == NULL) {
@@ -106,7 +106,7 @@ ndb_insert(void *_ndb, unsigned char *dna_rdx, unsigned char *dna)
 		cur = cur->children[dbyte];
 	}
 
-	memcpy(dynarray_add(ndb->dnas), dna, ndb->nsize_dna);
+	memcpy(dynarray_add(ndb->dnas), dna, ndb->size_dna);
 	id_dna = dynarray_count(ndb->dnas);
 	memcpy(dynarray_add(cur->id_dnas), &id_dna, sizeof(int));
 	return true;
@@ -142,7 +142,7 @@ store_node(FILE *fp, ndb_t *ndb, int level, rdx_node_t *node)
 	}
 	store_byte(fp, 1);
 	store_byte(fp, node->dna_byte);
-	if (level < ndb->nsize_rdx) {
+	if (level < ndb->size_rdx) {
 		for (int i = 0; i < 256; i++) {
 			store_node(fp, ndb, level + 1, node->children[i]);
 		}
@@ -171,13 +171,13 @@ ndb_store(void *_ndb, const char *path)
 	if (fp == NULL)
 		return false;
 
+	store_int(fp, ndb->resol_rdx);
+	store_int(fp, ndb->resol_dna);
 	store_int(fp, ndb->size_rdx);
 	store_int(fp, ndb->size_dna);
-	store_int(fp, ndb->nsize_rdx);
-	store_int(fp, ndb->nsize_dna);
 
 	store_node(fp, ndb, 0, ndb->root);
-	store_dnas(fp, ndb->nsize_dna, ndb->dnas);
+	store_dnas(fp, ndb->size_dna, ndb->dnas);
 
 	fclose(fp);
 	return true;
@@ -238,7 +238,7 @@ load_node(FILE *fp, ndb_t *ndb, int level, rdx_node_t **pnode)
 	if (node == NULL)
 		return false;
 
-	if (level < ndb->nsize_rdx) {
+	if (level < ndb->size_rdx) {
 		for (int i = 0; i < 256; i++) {
 			if (!load_node(fp, ndb, level + 1, &node->children[i])) {
 				free_node(node);
@@ -290,17 +290,17 @@ ndb_open(const char *path)
 	if (fp == NULL)
 		return false;
 
-	if (!load_int(fp, &ndb->size_rdx) ||
+	if (!load_int(fp, &ndb->resol_rdx) ||
+	    !load_int(fp, &ndb->resol_dna) ||
+	    !load_int(fp, &ndb->size_rdx) ||
 	    !load_int(fp, &ndb->size_dna) ||
-	    !load_int(fp, &ndb->nsize_rdx) ||
-	    !load_int(fp, &ndb->nsize_dna) ||
 	    !load_node(fp, ndb, 0, &ndb->root)) {
 		fclose(fp);
 		free(ndb);
 		return NULL;
 	}
 
-	if ((ndb->dnas = load_dnas(fp, ndb->nsize_dna)) == NULL) {
+	if ((ndb->dnas = load_dnas(fp, ndb->size_dna)) == NULL) {
 		fclose(fp);
 		free_node(ndb->root);
 		free(ndb);
@@ -320,7 +320,7 @@ ndb_search(void *_ndb, float threshold, unsigned char *dna_rdx, unsigned char *d
 	double	similarity_best = -1;
 	unsigned int	count;
 
-	for (int i = 0; i < ndb->nsize_rdx; i++) {
+	for (int i = 0; i < ndb->size_rdx; i++) {
 		unsigned char	dbyte = dna_rdx[i];
 
 		if (cur->children[dbyte] == NULL)
@@ -336,7 +336,7 @@ ndb_search(void *_ndb, float threshold, unsigned char *dna_rdx, unsigned char *d
 
 		id_dna = *(unsigned int *)dynarray_get(cur->id_dnas, i + 1);
 		dna_db = (unsigned char *)dynarray_get(ndb->dnas, id_dna);
-		similarity = cosine_similarity(dna, dna_db, ndb->nsize_dna);
+		similarity = cosine_similarity(dna, dna_db, ndb->size_dna);
 		if (similarity >= threshold && similarity > similarity_best) {
 			id_dna_best = id_dna;
 			similarity_best = similarity;

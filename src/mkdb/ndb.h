@@ -4,10 +4,10 @@
 #include <stdbool.h>
 
 void
-ndb_get_sizes(void *ndb, int *psize_rdx, int *psize_dna);
+ndb_get_resols(void *ndb, int *presol_rdx, int *presol_dna);
 
 void *
-ndb_create(int size_rdx, int size_dna);
+ndb_create(int resol_rdx, int resol_dna);
 
 void *
 ndb_open(const char *path);

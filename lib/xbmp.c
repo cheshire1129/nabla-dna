@@ -81,13 +81,13 @@ build_avg_bmp(ibmp_t *ibmp, int size)
 }
 
 int
-get_n_nabla_pixels(int dna_size)
+get_n_nabla_pixels(int dna_resol)
 {
-	if (dna_size % 2) {
-		return (dna_size + 1) * (dna_size - 1) / 2 / 2 + 1;
+	if (dna_resol % 2) {
+		return (dna_resol + 1) * (dna_resol - 1) / 2 / 2 + 1;
 	}
 	else {
-		return dna_size * ((dna_size - 1) / 2 + 1) / 2;
+		return dna_resol * ((dna_resol - 1) / 2 + 1) / 2;
 	}
 }
 
@@ -162,11 +162,11 @@ free_xbmp(xbmp_t *xbmp)
 }
 
 xbmp_t *
-build_nabla_bmp(ibmp_t *ibmp, int dna_size)
+build_nabla_bmp(ibmp_t *ibmp, int dna_resol)
 {
 	xbmp_t	*xbmp;
 
-	xbmp = build_avg_bmp(ibmp, dna_size);
+	xbmp = build_avg_bmp(ibmp, dna_resol);
 	if (xbmp == NULL)
 		return NULL;
 	if (!rotate_avg_bmp(xbmp)) {

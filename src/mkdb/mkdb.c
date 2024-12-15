@@ -11,8 +11,8 @@
 #include "nabla_dna.h"
 
 static bool	insert_mode = false;
-static int	size_rdx = 2;
-static int	size_dna = 4;
+static int	resol_rdx = 2;
+static int	resol_dna = 4;
 static float	threshold = 0.5;
 static const char	*inpath;
 static const char	*img_folder;
@@ -28,7 +28,7 @@ usage(void)
 "   -h: help(this message)\n"
 "   -I <image folder>: image folder(env var: IMAGE_FOLDER)\n"
 "   -A: DNA insert mode\n"
-"   -s <size>: dna sizes of an indexed dna and stored one\n"
+"   -x <dna resolution>: dna resolutions of an indexed dna and stored one\n"
 "              default: 2(indexing) 4(stored). Must precede the -D option\n"
 "              format: indexed:stored\n"
 "   -d <dna db>: existing dna db\n"
@@ -48,7 +48,7 @@ parse_args(int argc, char *argv[])
 {
         int     c;
 
-        while ((c = getopt(argc, argv, "hI:As:d:D:t:")) != -1) {
+        while ((c = getopt(argc, argv, "hI:Ax:d:D:t:")) != -1) {
                 switch (c) {
 		case 'I':
 			img_folder = optarg;
@@ -56,14 +56,14 @@ parse_args(int argc, char *argv[])
 		case 'A':
 			insert_mode = true;
 			break;
-                case 's':
-                        if (sscanf(optarg, "%d:%d", &size_rdx, &size_dna) != 2) {
+                case 'x':
+                        if (sscanf(optarg, "%d:%d", &resol_rdx, &resol_dna) != 2) {
                                 usage();
                                 exit(1);
                         }
                         break;
 		case 'D':
-			if ((ndb = ndb_create(size_rdx, size_dna)) == NULL) {
+			if ((ndb = ndb_create(resol_rdx, resol_dna)) == NULL) {
 				errmsg("can't create ndb: %s\n", optarg);
 				exit(2);
 			}
@@ -75,7 +75,7 @@ parse_args(int argc, char *argv[])
 				errmsg("can't open ndb: %s\n", optarg);
 				exit(2);
 			}
-			ndb_get_sizes(ndb, &size_rdx, &size_dna);
+			ndb_get_resols(ndb, &resol_rdx, &resol_dna);
 			break;
 		case 't':
 			if (sscanf(optarg, "%f", &threshold) != 1) {
@@ -116,8 +116,8 @@ mkdb_imgpath(const char *fname, const char *imgpath)
 		return false;
 	}
 
-	dnabla_rdx = build_nabla_dna(ibmp, size_rdx);
-	dnabla = build_nabla_dna(ibmp, size_dna);
+	dnabla_rdx = build_nabla_dna(ibmp, resol_rdx);
+	dnabla = build_nabla_dna(ibmp, resol_dna);
 	ibmp_free(ibmp);
 
 	res = ndb_insert(ndb, dnabla_rdx->pixels, dnabla->pixels);
@@ -180,8 +180,8 @@ search_imgpath(const char *imgpath)
 		return -1;
 	}
 
-	dnabla_rdx = build_nabla_dna(ibmp, size_rdx);
-	dnabla = build_nabla_dna(ibmp, size_dna);
+	dnabla_rdx = build_nabla_dna(ibmp, resol_rdx);
+	dnabla = build_nabla_dna(ibmp, resol_dna);
 	ibmp_free(ibmp);
 
 	searched = ndb_search(ndb, threshold, dnabla_rdx->pixels, dnabla->pixels);

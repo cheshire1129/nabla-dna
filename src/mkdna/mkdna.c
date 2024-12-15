@@ -9,7 +9,8 @@
 #include "nabla_dna.h"
 #include "util.h"
 
-static int	size = 4;
+static int	dna_resol = 4;
+static int	dna_depth = 8;
 static const char	*inpath;
 static const char	*outpath;
 static const char	*img_folder;
@@ -22,7 +23,8 @@ usage(void)
 "   A list file must have a .txt extension\n"
 "   <options>\n"
 "   -h: help(this message)\n"
-"   -s <size>: dna size (default: 4)\n"
+"   -x <resolution>: DNA resolution (default: 4)\n"
+"   -d <depth>: DNA depth bit (default and max: 8)\n"
 "   -I <image folder>: image folder(env var: IMAGE_FOLDER)\n"
 "   -o <output>: save dna as text\n"
 		);
@@ -39,14 +41,20 @@ parse_args(int argc, char *argv[])
 {
         int     c;
 
-        while ((c = getopt(argc, argv, "hs:Io:")) != -1) {
+        while ((c = getopt(argc, argv, "hx:d:Io:")) != -1) {
                 switch (c) {
-                case 's':
-                        if (sscanf(optarg, "%d", &size) != 1) {
+                case 'x':
+                        if (sscanf(optarg, "%d", &dna_resol) != 1) {
                                 usage();
                                 exit(1);
                         }
                         break;
+		case 'd':
+			if (sscanf(optarg, "%d", &dna_depth) != 1) {
+				usage();
+				exit(1);
+			}
+			break;
 		case 'I':
 			img_folder = optarg;
 			break;
@@ -77,7 +85,7 @@ write_dnabla(FILE *fp, dnabla_t *dnabla)
 	int	n_pixels;
 
 	p = dnabla->pixels;
-	n_pixels = get_n_nabla_pixels(dnabla->size);
+	n_pixels = get_n_nabla_pixels(dnabla->dna_size);
 	for (i = 0; i < n_pixels; i++, p++) {
 		fprintf(fp, "%3hhu ", *p);
 	}
@@ -113,7 +121,7 @@ mkdna_imgpath(const char *fname, const char *imgpath)
 		return false;
 	}
 
-	dnabla = build_nabla_dna(ibmp, size);
+	dnabla = build_nabla_dna(ibmp, dna_resol);
 	ibmp_free(ibmp);
 
 	if (outpath != NULL) {

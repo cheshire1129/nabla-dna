@@ -24,12 +24,12 @@ get_quantized_bmp(xbmp_t *nbmp)
 }
 
 dnabla_t *
-build_nabla_dna(ibmp_t *ibmp, int dna_size)
+build_nabla_dna(ibmp_t *ibmp, int dna_resol)
 {
 	xbmp_t	*nbmp;
 	dnabla_t	*dnabla;
 
-	nbmp = build_nabla_bmp(ibmp, dna_size);
+	nbmp = build_nabla_bmp(ibmp, dna_resol);
 	if (nbmp == NULL)
 		return NULL;
 
@@ -38,7 +38,7 @@ build_nabla_dna(ibmp_t *ibmp, int dna_size)
 		free_xbmp(nbmp);
 		return NULL;
 	}
-	dnabla->size = nbmp->size;
+	dnabla->dna_size = nbmp->size;
 	dnabla->pixels = get_quantized_bmp(nbmp);
 
 	free_xbmp(nbmp);
