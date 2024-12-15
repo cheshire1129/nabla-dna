@@ -18,23 +18,27 @@ typedef struct _node {
 } rdx_node_t;
 
 typedef struct {
-	int	resol_rdx, resol_dna;
+	int	resol_rdx, depth_rdx;
+	int	resol_dna, depth_dna;
 	int	size_rdx, size_dna;
+	int	n_children;
 	rdx_node_t	*root;
 	void *dnas;
 } ndb_t;
 
 void
-ndb_get_resols(void *_ndb, int *presol_rdx, int *presol_dna)
+ndb_get_resols(void *_ndb, int *presol_rdx, int *pdepth_rdx, int *presol_dna, int *pdepth_dna)
 {
 	ndb_t	*ndb = (ndb_t *)_ndb;
 
 	*presol_rdx = ndb->resol_rdx;
+	*pdepth_rdx = ndb->depth_rdx;
 	*presol_dna = ndb->resol_dna;
+	*pdepth_dna = ndb->depth_dna;
 }
 
 static rdx_node_t *
-create_node(unsigned char dna_byte)
+create_node(unsigned char dna_byte, int n_children)
 {
 	rdx_node_t	*node;
 
@@ -43,25 +47,25 @@ create_node(unsigned char dna_byte)
 		return NULL;
 
 	node->dna_byte = dna_byte;
-	for (int i = 0; i < 256; i++)
+	for (int i = 0; i < n_children; i++)
 		node->children[i] = NULL;
 	node->id_dnas = dynarray_create(sizeof(int), DNAS_CHUNKSIZE);
 	return node;
 }
 
 static void
-free_node(rdx_node_t *node)
+free_node(rdx_node_t *node, int n_children)
 {
 	if (node == NULL)
 		return;
-	for (int i = 0; i < 256; i++) {
-		free_node(node->children[i]);
+	for (int i = 0; i < n_children; i++) {
+		free_node(node->children[i], n_children);
 	}
 	dynarray_free(node->id_dnas);
 }
 
 void *
-ndb_create(int resol_rdx, int resol_dna)
+ndb_create(int resol_rdx, int depth_rdx, int resol_dna, int depth_dna)
 {
 	ndb_t	*ndb;
 
@@ -70,10 +74,13 @@ ndb_create(int resol_rdx, int resol_dna)
 		return NULL;
 
 	ndb->resol_rdx = resol_rdx;
+	ndb->depth_rdx = depth_rdx;
 	ndb->resol_dna = resol_dna;
+	ndb->depth_dna = depth_dna;
 	ndb->size_rdx = get_n_nabla_pixels(resol_rdx);
 	ndb->size_dna = get_n_nabla_pixels(resol_dna);
-	ndb->root = create_node(0);
+	ndb->n_children = 2 << ndb->depth_rdx;
+	ndb->root = create_node(0, ndb->n_children);
 	ndb->dnas = dynarray_create(ndb->size_dna, DNAS_CHUNKSIZE);
 
 	return ndb;
@@ -84,7 +91,7 @@ ndb_close(void *_ndb)
 {
 	ndb_t	*ndb = (ndb_t *)_ndb;
 
-	free_node(ndb->root);
+	free_node(ndb->root, ndb->n_children);
 	free(ndb);
 }
 
@@ -99,7 +106,7 @@ ndb_insert(void *_ndb, unsigned char *dna_rdx, unsigned char *dna)
 		unsigned char	dbyte = dna_rdx[i];
 
 		if (cur->children[dbyte] == NULL) {
-			cur->children[dbyte] = create_node(dbyte);
+			cur->children[dbyte] = create_node(dbyte, ndb->n_children);
 			if (cur->children[dbyte] == NULL)
 				return false;
 		}
@@ -143,7 +150,7 @@ store_node(FILE *fp, ndb_t *ndb, int level, rdx_node_t *node)
 	store_byte(fp, 1);
 	store_byte(fp, node->dna_byte);
 	if (level < ndb->size_rdx) {
-		for (int i = 0; i < 256; i++) {
+		for (int i = 0; i < ndb->n_children; i++) {
 			store_node(fp, ndb, level + 1, node->children[i]);
 		}
 	}
@@ -172,7 +179,9 @@ ndb_store(void *_ndb, const char *path)
 		return false;
 
 	store_int(fp, ndb->resol_rdx);
+	store_int(fp, ndb->depth_rdx);
 	store_int(fp, ndb->resol_dna);
+	store_int(fp, ndb->depth_dna);
 	store_int(fp, ndb->size_rdx);
 	store_int(fp, ndb->size_dna);
 
@@ -234,14 +243,14 @@ load_node(FILE *fp, ndb_t *ndb, int level, rdx_node_t **pnode)
 
 	if (!load_byte(fp, &dna_byte))
 		return false;
-	node = create_node(dna_byte);
+	node = create_node(dna_byte, ndb->n_children);
 	if (node == NULL)
 		return false;
 
 	if (level < ndb->size_rdx) {
-		for (int i = 0; i < 256; i++) {
+		for (int i = 0; i < ndb->n_children; i++) {
 			if (!load_node(fp, ndb, level + 1, &node->children[i])) {
-				free_node(node);
+				free_node(node, ndb->n_children);
 				return false;
 			}
 		}
@@ -249,7 +258,7 @@ load_node(FILE *fp, ndb_t *ndb, int level, rdx_node_t **pnode)
 	else {
 		node->id_dnas = load_id_dnas(fp);
 		if (node->id_dnas == NULL) {
-			free_node(node);
+			free_node(node, ndb->n_children);
 			return false;
 		}
 	}
@@ -291,10 +300,19 @@ ndb_open(const char *path)
 		return false;
 
 	if (!load_int(fp, &ndb->resol_rdx) ||
+	    !load_int(fp, &ndb->depth_rdx) ||
 	    !load_int(fp, &ndb->resol_dna) ||
+	    !load_int(fp, &ndb->depth_dna) ||
 	    !load_int(fp, &ndb->size_rdx) ||
-	    !load_int(fp, &ndb->size_dna) ||
-	    !load_node(fp, ndb, 0, &ndb->root)) {
+	    !load_int(fp, &ndb->size_dna)) {
+		fclose(fp);
+		free(ndb);
+		return NULL;
+	}
+
+	ndb->n_children = 2 << ndb->depth_rdx;
+
+	if (!load_node(fp, ndb, 0, &ndb->root)) {
 		fclose(fp);
 		free(ndb);
 		return NULL;
@@ -302,7 +320,7 @@ ndb_open(const char *path)
 
 	if ((ndb->dnas = load_dnas(fp, ndb->size_dna)) == NULL) {
 		fclose(fp);
-		free_node(ndb->root);
+		free_node(ndb->root, ndb->n_children);
 		free(ndb);
 		return NULL;
 	}

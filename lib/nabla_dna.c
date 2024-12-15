@@ -7,9 +7,11 @@
 #include "nabla_dna.h"
 
 static uint8_t *
-get_quantized_bmp(xbmp_t *nbmp)
+get_quantized_bmp(xbmp_t *nbmp, int dna_depth)
 {
 	uint8_t	*pixels;
+	int	pixel_max;
+	float	depth_adj;
 	int	n_pixels;
 	int	i;
 
@@ -17,14 +19,20 @@ get_quantized_bmp(xbmp_t *nbmp)
 	pixels = (uint8_t *)malloc(n_pixels * sizeof(uint8_t));
 	if (pixels == NULL)
 		return NULL;
-	for (i = 0; i < n_pixels; i++)
-		pixels[i] = (uint8_t)round(nbmp->pixels[i]);
+
+	pixel_max = 2 << (dna_depth - 1);
+	depth_adj = (pixel_max - 1) / 255.0;
+	for (i = 0; i < n_pixels; i++) {
+		pixels[i] = (uint8_t)floor(nbmp->pixels[i] * depth_adj);
+		if (pixels[i] >= pixel_max)
+			pixels[i]--;
+	}
 
 	return pixels;
 }
 
 dnabla_t *
-build_nabla_dna(ibmp_t *ibmp, int dna_resol)
+build_nabla_dna(ibmp_t *ibmp, int dna_resol, int dna_depth)
 {
 	xbmp_t	*nbmp;
 	dnabla_t	*dnabla;
@@ -39,7 +47,7 @@ build_nabla_dna(ibmp_t *ibmp, int dna_resol)
 		return NULL;
 	}
 	dnabla->dna_size = nbmp->size;
-	dnabla->pixels = get_quantized_bmp(nbmp);
+	dnabla->pixels = get_quantized_bmp(nbmp, dna_depth);
 
 	free_xbmp(nbmp);
 

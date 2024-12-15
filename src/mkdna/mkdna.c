@@ -121,7 +121,7 @@ mkdna_imgpath(const char *fname, const char *imgpath)
 		return false;
 	}
 
-	dnabla = build_nabla_dna(ibmp, dna_resol);
+	dnabla = build_nabla_dna(ibmp, dna_resol, dna_depth);
 	ibmp_free(ibmp);
 
 	if (outpath != NULL) {
