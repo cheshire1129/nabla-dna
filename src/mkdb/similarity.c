@@ -3,18 +3,18 @@
 #include <math.h>
 
 static double
-dot_product(unsigned char *dna, unsigned char *dna2, int size)
+dot_product(char *dna1, char *dna2, int size)
 {
 	double	prod = 0.0;
 
 	for (int i = 0; i < size; i++) {
-		prod += (double)dna[i] * (double)dna2[i];
+		prod += (double)dna1[i] * (double)dna2[i];
 	}
 	return prod;
 }
 
 static double
-magnitude(unsigned char *dna, int size)
+magnitude(char *dna, int size)
 {
 	double sum = 0.0;
 
@@ -24,7 +24,7 @@ magnitude(unsigned char *dna, int size)
 	return sqrt(sum);
 }
 
-double
+static double
 cosine_similarity(unsigned char *dna1, unsigned char *dna2, int size)
 {
 	double	numerator = dot_product(dna1, dna2, size);
@@ -35,4 +35,10 @@ cosine_similarity(unsigned char *dna1, unsigned char *dna2, int size)
 	} else {
 		return numerator / denominator;
 	}
+}
+
+double
+get_similarity(unsigned char *dna1, unsigned char *dna2, int size)
+{
+	return cosine_similarity((char *)dna1, (char *)dna2, size);
 }

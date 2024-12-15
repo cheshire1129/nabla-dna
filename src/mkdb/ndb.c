@@ -354,7 +354,7 @@ ndb_search(void *_ndb, float threshold, unsigned char *dna_rdx, unsigned char *d
 
 		id_dna = *(unsigned int *)dynarray_get(cur->id_dnas, i + 1);
 		dna_db = (unsigned char *)dynarray_get(ndb->dnas, id_dna);
-		similarity = cosine_similarity(dna, dna_db, ndb->size_dna);
+		similarity = get_similarity(dna, dna_db, ndb->size_dna);
 		if (similarity >= threshold && similarity > similarity_best) {
 			id_dna_best = id_dna;
 			similarity_best = similarity;
