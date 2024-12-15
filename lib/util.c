@@ -130,6 +130,28 @@ lib_closelst(void *_lst)
 }
 
 bool
+lib_iterlst(const char *path_list, bool (*func)(unsigned int, const char *, void *), void *ctx)
+{
+	void	*lst;
+	const char	*img_name;
+	unsigned int	idx;
+
+	if ((lst = lib_openlst(path_list)) == NULL)
+		return false;
+
+	idx = 0;
+	while ((img_name = lib_readlst(lst))) {
+		if (!func(idx, img_name, ctx)) {
+			lib_closelst(lst);
+			return false;
+		}
+		idx++;
+	}
+	lib_closelst(lst);
+	return true;
+}
+
+bool
 path_exist(const char *path)
 {
 	if (access(path, F_OK) == 0)
@@ -142,6 +164,8 @@ path_has_ext(const char *path, const char *ext)
 {
 	const char	*dot = strrchr(path, '.');
 
+	if (dot == NULL)
+		return false;
 	if (strcmp(dot + 1, ext) == 0)
 		return true;
 	return false;
@@ -182,4 +206,60 @@ path_get_replaced_ext(const char *path, const char *ext_new)
 	}
 
 	return path_new;
+}
+
+const char *
+path_basename(const char *path)
+{
+	char	*path_base;
+	char	*slash;
+
+	slash = strrchr(path, '/');
+	if (slash == NULL)
+		return path;
+	return slash + 1;
+}
+
+bool
+try_iter_imgfmts(const char *img_folder, const char *imgname, bool (*func)(const char *, void *), void *ctx)
+{
+	const char	*ext_names[] = { "jpg", "png", "gif", "bmp", "jpeg", "JPG", "PNG", "GIF", "BMP", "JPEG" };
+	int	i;
+
+	if (path_exist(imgname))
+		return func(imgname, ctx);
+	for (i = 0; i < sizeof(ext_names) / sizeof(const char *); i++) {
+		char	*imgpath = path_build(img_folder, imgname, ext_names[i]);
+		if (path_exist(imgpath)) {
+			bool	res = func(imgpath, ctx);
+			free(imgpath);
+			return res;
+		}
+		free(imgpath);
+	}
+	return false;
+}
+
+bool
+iter_folder(const char *path_folder, bool (*func)(const char *, const char *, void *), void *ctx)
+{
+	const char	*name;
+	void	*dir;
+	bool	res = true;
+
+	dir = lib_opendir(path_folder);
+	if (dir == NULL)
+		return false;
+
+	while (res && (name = lib_readdir(dir))) {
+		char	*path;
+
+		path = path_join(path_folder, name);
+		res = func(name, path, ctx);
+		free(path);
+	}
+
+	lib_closedir(dir);
+
+	return res;
 }

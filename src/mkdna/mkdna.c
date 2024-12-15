@@ -141,66 +141,41 @@ mkdna_imgpath(const char *fname, const char *imgpath)
 }
 
 static bool
+func_mkdna_img(const char *imgpath, void *ctx)
+{
+	const char	*fname = (const char *)ctx;
+
+	return mkdna_imgpath(fname, imgpath);
+}
+
+static bool
 mkdna_img(const char *fname, const char *imgname)
 {
-	const char	*ext_names[] = { "jpg", "png", "gif", "bmp", "jpeg", "JPG", "PNG", "GIF", "BMP", "JPEG" };
-	int	i;
+	return try_iter_imgfmts(img_folder, imgname, func_mkdna_img, (void *)fname);
+}
 
-	if (path_exist(imgname))
-		return mkdna_imgpath(fname, imgname);
-	for (i = 0; i < sizeof(ext_names) / sizeof(const char *); i++) {
-		char	*imgpath = path_build(img_folder, imgname, ext_names[i]);
-		if (path_exist(imgpath)) {
-			bool	res = mkdna_imgpath(fname, imgpath);
-			free(imgpath);
-			return res;
-		}
-		free(imgpath);
-	}
-	return false;
+static bool
+func_mkdna_folder(const char *fname, const char *imgpath, void *ctx)
+{
+	return mkdna_imgpath(path_basename(imgpath), imgpath);
 }
 
 static bool
 mkdna_folder(const char *path_folder)
 {
-	const char	*name;
-	void	*dir;
-	bool	res = true;
+	return iter_folder(path_folder, func_mkdna_folder, NULL);
+}
 
-	dir = lib_opendir(path_folder);
-	if (dir == NULL)
-		return false;
-
-	while (res && (name = lib_readdir(dir))) {
-		char	*imgpath;
-
-		imgpath = path_join(path_folder, name);
-		res = mkdna_imgpath(name, imgpath);
-		free(imgpath);
-	}
-
-	lib_closedir(dir);
-
-	return res;
+static bool
+func_mkdna_list(unsigned int idx, const char *img_name, void *ctx)
+{
+	return mkdna_img(img_name, img_name);
 }
 
 static bool
 mkdna_list(const char *path_list)
 {
-	void	*lst;
-	const char	*img_name;
-
-	if ((lst = lib_openlst(path_list)) == NULL)
-		return false;
-
-	while ((img_name = lib_readlst(lst))) {
-		if (!mkdna_img(img_name, img_name)) {
-			lib_closelst(lst);
-			return false;
-		}
-	}
-	lib_closelst(lst);
-	return true;
+	return lib_iterlst(path_list, func_mkdna_list, NULL);
 }
 
 int

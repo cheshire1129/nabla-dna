@@ -18,3 +18,11 @@ target_include_directories(mkdna PRIVATE "lib" "${PROJECT_BINARY_DIR}")
 
 target_link_libraries(mkdna PRIVATE nabla m)
 
+file(GLOB SRC_MKDB "src/mkdb/*.c")
+
+add_executable(mkdb ${SRC_MKDB})
+
+target_include_directories(mkdb PRIVATE "lib" "${PROJECT_BINARY_DIR}")
+
+target_link_libraries(mkdb PRIVATE nabla m)
+
