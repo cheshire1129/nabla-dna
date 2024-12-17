@@ -25,7 +25,7 @@ magnitude(char *dna, int size)
 }
 
 static double
-cosine_similarity(unsigned char *dna1, unsigned char *dna2, int size)
+cosine_similarity(char *dna1, char *dna2, int size)
 {
 	double	numerator = dot_product(dna1, dna2, size);
 	double	denominator = magnitude(dna1, size) * magnitude(dna2, size);

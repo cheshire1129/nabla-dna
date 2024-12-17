@@ -33,3 +33,11 @@ target_include_directories(mkdb PRIVATE "lib" "${PROJECT_BINARY_DIR}")
 
 target_link_libraries(mkdb PRIVATE nabla faiss OpenMP::OpenMP_C BLAS::BLAS stdc++ m)
 
+file(GLOB SRC_GETDIST "src/getdist/*.c")
+
+add_executable(getdist ${SRC_GETDIST})
+
+target_include_directories(getdist PRIVATE "lib" "${PROJECT_BINARY_DIR}")
+
+target_link_libraries(getdist PRIVATE nabla m)
+
