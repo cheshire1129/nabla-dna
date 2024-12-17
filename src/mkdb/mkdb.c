@@ -172,7 +172,12 @@ func_mkdb_list(unsigned int idx, const char *img_name, void *ctx)
 static bool
 mkdb_list(const char *path_list)
 {
-	return lib_iterlst(path_list, func_mkdb_list, NULL);
+	bool	res;
+
+	init_tickcount();
+	res = lib_iterlst(path_list, func_mkdb_list, NULL);
+	printf("insert time: %.3f (sec)\n", (float)(get_tickcount() / 1000.0));
+	return res;
 }
 
 static int
@@ -282,7 +287,9 @@ search_list(const char *path_list)
 	void	*search_infos = dynarray_create(sizeof(search_info_list_t), 16);
 	unsigned int	count;
 
+	init_tickcount();
 	lib_iterlst(path_list, func_search_list, search_infos);
+	printf("search time: %.3f (sec)\n", (float)(get_tickcount() / 1000.0));
 
 	count = dynarray_count(search_infos);
 	for (int i = 0; i < count; i++) {

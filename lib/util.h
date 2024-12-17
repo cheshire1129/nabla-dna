@@ -28,4 +28,7 @@ try_iter_imgfmts(const char *img_folder, const char *imgname, bool (*func)(const
 bool
 iter_folder(const char *path_folder, bool (*func)(const char *, const char *, void *), void *ctx);
 
+void init_tickcount(void);
+unsigned long get_tickcount(void);
+
 #endif

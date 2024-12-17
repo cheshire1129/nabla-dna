@@ -10,6 +10,7 @@
 #include <sys/types.h>
 #include <dirent.h>
 #include <stdbool.h>
+#include <time.h>
 
 void
 errmsg(const char *fmt, ...)
@@ -261,4 +262,32 @@ iter_folder(const char *path_folder, bool (*func)(const char *, const char *, vo
 	lib_closedir(dir);
 
 	return res;
+}
+
+static struct timespec ts_started;
+
+void
+init_tickcount(void)
+{
+	clock_gettime(CLOCK_MONOTONIC, &ts_started);
+}
+
+unsigned long
+get_tickcount(void)
+{
+	struct timespec	ts;
+	unsigned long	ticks;
+
+	clock_gettime(CLOCK_MONOTONIC, &ts);
+
+	if (ts.tv_nsec < ts_started.tv_nsec) {
+                ticks = ((unsigned long)(ts.tv_sec - ts_started.tv_sec - 1)) * 1000;
+                ticks += (1000000000 + ts.tv_nsec - ts_started.tv_nsec) / 1000000;
+        }
+        else {
+                ticks = ((unsigned long)(ts.tv_sec - ts_started.tv_sec)) * 1000;
+                ticks += (ts.tv_nsec - ts_started.tv_nsec) / 1000000;
+        }
+
+	return ticks;
 }
