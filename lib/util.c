@@ -211,7 +211,6 @@ path_get_replaced_ext(const char *path, const char *ext_new)
 const char *
 path_basename(const char *path)
 {
-	char	*path_base;
 	char	*slash;
 
 	slash = strrchr(path, '/');

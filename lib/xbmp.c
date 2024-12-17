@@ -95,7 +95,6 @@ static bool
 rotate_avg_bmp(xbmp_t *abmp)
 {
 	int	size = abmp->size;
-	int	n_nabla_pixels;
 	float	*pixels, *pixel;
 	int	w, h;
 

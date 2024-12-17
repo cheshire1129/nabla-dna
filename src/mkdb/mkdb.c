@@ -181,7 +181,6 @@ search_imgpath(const char *imgpath)
 	dnabla_t	*dnabla, *dnabla_rdx;
 	ibmp_t	*ibmp;
 	int	searched;
-	bool	res;
 
 	ibmp = ibmp_load(imgpath);
 	if (ibmp == NULL) {
@@ -242,7 +241,7 @@ func_search_folder(const char *fname, const char *imgpath, void *ctx)
 	return true;
 }
 
-static void *
+static void
 search_folder(const char *path_folder)
 {
 	void	*search_infos = dynarray_create(sizeof(search_info_folder_t), 16);

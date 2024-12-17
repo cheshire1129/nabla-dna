@@ -4,4 +4,6 @@
 #define nabla_dna_VERSION_MINOR @nabla-dna_VERSION_MINOR@
 #define nabla_dna_VERSION_PATCH @nabla-dna_VERSION_PATCH@
 
+#ifndef _GNU_SOURCE
 #define _GNU_SOURCE
+#endif
