@@ -130,26 +130,27 @@ lib_closelst(void *_lst)
 	free(lst);
 }
 
-bool
+int
 lib_iterlst(const char *path_list, bool (*func)(unsigned int, const char *, void *), void *ctx)
 {
 	void	*lst;
 	const char	*img_name;
 	unsigned int	idx;
+	unsigned int	count;
 
 	if ((lst = lib_openlst(path_list)) == NULL)
-		return false;
+		return -1;
 
 	idx = 0;
 	while ((img_name = lib_readlst(lst))) {
 		if (!func(idx, img_name, ctx)) {
 			lib_closelst(lst);
-			return false;
+			return -1;
 		}
 		idx++;
 	}
 	lib_closelst(lst);
-	return true;
+	return idx;
 }
 
 bool

@@ -185,17 +185,14 @@ ndb_open(const char *path)
 }
 
 int
-ndb_search(void *_ndb, float threshold, unsigned char *dna_rdx, unsigned char *dna)
+ndb_search(void *_ndb, unsigned char *dna_rdx, unsigned char *dna, double *psimilarity)
 {
 	ndb_t	*ndb = (ndb_t *)_ndb;
 	unsigned char	*dna_searched;
-	double	similarity;
 	int	id_dna;
 
 	id_dna = vdb_search(ndb->vdb, dna_rdx);
 	dna_searched = dynarray_get(ndb->dnas, id_dna);
-	similarity = get_similarity(dna, dna_searched, ndb->size_dna);
-	if (similarity >= threshold)
-		return id_dna;
-	return -1;
+	*psimilarity = get_similarity(dna, dna_searched, ndb->size_dna);
+	return id_dna;
 }

@@ -15,7 +15,7 @@ static int	resol_rdx = 2;
 static int	resol_dna = 4;
 static int	depth_rdx = 2;
 static int	depth_dna = 8;
-static float	threshold = 0.5;
+static float	threshold = -1;
 static const char	*inpath;
 static const char	*img_folder;
 static const char	*path_ndb;
@@ -172,16 +172,16 @@ func_mkdb_list(unsigned int idx, const char *img_name, void *ctx)
 static bool
 mkdb_list(const char *path_list)
 {
-	bool	res;
+	int	ret;
 
 	init_tickcount();
-	res = lib_iterlst(path_list, func_mkdb_list, NULL);
+	ret = lib_iterlst(path_list, func_mkdb_list, NULL);
 	printf("insert time: %.3f (sec)\n", (float)(get_tickcount() / 1000.0));
-	return res;
+	return (ret >= 0) ? true: false;
 }
 
 static int
-search_imgpath(const char *imgpath)
+search_imgpath(const char *imgpath, double *psimilarity)
 {
 	dnabla_t	*dnabla, *dnabla_rdx;
 	ibmp_t	*ibmp;
@@ -197,7 +197,9 @@ search_imgpath(const char *imgpath)
 	dnabla = build_nabla_dna(ibmp, resol_dna, depth_dna);
 	ibmp_free(ibmp);
 
-	searched = ndb_search(ndb, threshold, dnabla_rdx->pixels, dnabla->pixels);
+	searched = ndb_search(ndb, dnabla_rdx->pixels, dnabla->pixels, psimilarity);
+	if (*psimilarity < threshold)
+		searched = -1;
 
 	free_dnabla(dnabla_rdx);
 	free_dnabla(dnabla);
@@ -205,25 +207,31 @@ search_imgpath(const char *imgpath)
 	return searched;
 }
 
+typedef struct {
+	unsigned int	id_searched;
+	double	similarity;
+} search_img_ctx_t;
+
 static bool
 func_search_img(const char *imgpath, void *ctx)
 {
-	unsigned int	*pidx = (unsigned int *)ctx;
+	search_img_ctx_t	*pctx = (search_img_ctx_t *)ctx;
 
-	*pidx = search_imgpath(imgpath);
+	pctx->id_searched = search_imgpath(imgpath, &pctx->similarity);
 	return true;
 }
 
 static int
-search_img(const char *imgname)
+search_img(const char *imgname, double *psimilarity)
 {
-	unsigned int	id_searched;
+	search_img_ctx_t	ctx;
 
-	if (!try_iter_imgfmts(img_folder, imgname, func_search_img, (void *)&id_searched)) {
+	if (!try_iter_imgfmts(img_folder, imgname, func_search_img, (void *)&ctx)) {
 		errmsg("not found image: %s", imgname);
 		return -1;
 	}
-	return id_searched;
+	*psimilarity = ctx.similarity;
+	return ctx.id_searched;
 }
 
 #define FNAME_MAX	128
@@ -231,16 +239,20 @@ search_img(const char *imgname)
 typedef struct {
 	char	fname[FNAME_MAX];
 	unsigned int	id_searched;
+	double	similarity;
 } search_info_folder_t;
 
 static bool
 func_search_folder(const char *fname, const char *imgpath, void *ctx)
 {
-	int	id_searched = search_img(imgpath);
+	int	id_searched;
+	double	similarity;
 
+	id_searched = search_img(imgpath, &similarity);
 	if (id_searched >= 0) {
 		search_info_folder_t	*info = (search_info_folder_t *)dynarray_add(ctx);
 		info->id_searched = (unsigned int)id_searched;
+		info->similarity = similarity;
 		strncpy(info->fname, fname, FNAME_MAX);
 	}
 	return true;
@@ -265,18 +277,21 @@ search_folder(const char *path_folder)
 typedef struct {
 	unsigned int	idx;
 	unsigned int	id_searched;
+	double		similarity;
 } search_info_list_t;
 
 static bool
 func_search_list(unsigned int idx, const char *imgname, void *ctx)
 {
 	int	id_searched;
+	double	similarity;
 
-	id_searched = search_img(imgname);
+	id_searched = search_img(imgname, &similarity);
 	if (id_searched >= 0) {
 		search_info_list_t	*info = (search_info_list_t *)dynarray_add(ctx);
 		info->idx = idx;
 		info->id_searched = (unsigned int)id_searched;
+		info->similarity = similarity;
 	}
 	return true;
 }
@@ -285,16 +300,22 @@ static void
 search_list(const char *path_list)
 {
 	void	*search_infos = dynarray_create(sizeof(search_info_list_t), 16);
-	unsigned int	count;
+	unsigned int	count, total;
 
 	init_tickcount();
-	lib_iterlst(path_list, func_search_list, search_infos);
+	total = lib_iterlst(path_list, func_search_list, search_infos);
+	if (total < 0) {
+		errmsg("listing error");
+		return;
+	}
 	printf("search time: %.3f (sec)\n", (float)(get_tickcount() / 1000.0));
 
 	count = dynarray_count(search_infos);
+	printf("matched ratio: %.2f\n", (float)(count / total));
+
 	for (int i = 0; i < count; i++) {
 		search_info_list_t	*info = dynarray_get(search_infos, i + 1);
-		printf("%d: %d\n", info->idx + 1, info->id_searched);
+		printf("%d: %d, %.4lf\n", info->idx + 1, info->id_searched, info->similarity);
 	}
 	dynarray_free(search_infos);
 }
@@ -331,9 +352,12 @@ main(int argc, char *argv[])
 			if (path_has_ext(inpath, "txt"))
 				search_list(inpath);
 			else {
-				int	id_searched = search_img(inpath);
+				int	id_searched;
+				double	similarity;
+
+				id_searched = search_img(inpath, &similarity);
 				if (id_searched >= 0)
-					printf("searched: %d\n", id_searched);
+					printf("searched: %d, %.4lf\n", id_searched, similarity);
 			}
 		}
 	}

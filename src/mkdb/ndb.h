@@ -16,7 +16,7 @@ bool
 ndb_insert(void *ndb, unsigned char *dna_rdx, unsigned char *dna);
 
 int
-ndb_search(void *ndb, float threshold, unsigned char *dna_rdx, unsigned char *dna);
+ndb_search(void *ndb, unsigned char *dna_rdx, unsigned char *dna, double *psimilarity);
 
 void
 ndb_close(void *ndb);

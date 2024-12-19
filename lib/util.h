@@ -14,7 +14,7 @@ void lib_closedir(void *dir);
 void *lib_openlst(const char *path);
 const char *lib_readlst(void *lst);
 void lib_closelst(void *lst);
-bool lib_iterlst(const char *path_list, bool (*func)(unsigned int, const char *, void *), void *ctx);
+int lib_iterlst(const char *path_list, bool (*func)(unsigned int, const char *, void *), void *ctx);
 
 char *path_exist(const char *path);
 char *path_join(const char *path, const char *fname);
