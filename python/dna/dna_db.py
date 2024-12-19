@@ -44,12 +44,16 @@ class DnaDb:
     def _search_dna_from_file(self, model: dna_model.DnaModel, path: str):
         list_dna = []
         lines = LineEnumerator(path)
+        start = time.perf_counter()
         for img_name in lines:
             list_dna.append(model.get_dna(img_name))
+        elapsed = time.perf_counter() - start
+        print(f"dna extraction time: {elapsed:.6f} sec")
+
         start = time.perf_counter()
         dists, ids = self.vdb.search_multi(list_dna)
         elapsed = time.perf_counter() - start
-        print(f"dna search time: {elapsed:.6f} sec")
+        print(f"vdb search time: {elapsed:.6f} sec")
         if self.threshold:
             indices = np.where(dists <= self.threshold)
             ratio = len(indices[0]) / len(list_dna) * 100
