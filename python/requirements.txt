@@ -1,6 +1,7 @@
-Pillow
 numpy
 scipy
+tensorflow
+Pillow
 opencv-python
 opencv-python-headless
-faiss
+faiss-cpu
