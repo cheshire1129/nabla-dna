@@ -311,7 +311,7 @@ search_list(const char *path_list)
 	printf("search time: %.3f (sec)\n", (float)(get_tickcount() / 1000.0));
 
 	count = dynarray_count(search_infos);
-	printf("matched ratio: %.2f\n", (float)(count / total));
+	printf("matched ratio: %.2f\n", (float)(count * 1.0 / total));
 
 	for (int i = 0; i < count; i++) {
 		search_info_list_t	*info = dynarray_get(search_infos, i + 1);
