@@ -15,7 +15,7 @@ class Vdb:
         self.path = path
 
     def _create_index(self, vec_size):
-        self.index = faiss.IndexFlatL2(vec_size)
+        self.index = faiss.IndexHNSWFlat(vec_size, 32)
 
     def insert(self, dna):
         if self.index is None:
