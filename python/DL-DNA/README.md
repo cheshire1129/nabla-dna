@@ -12,6 +12,8 @@ DL-DNA can extract feature vector(DNA) for a 2D image and calculate image simila
 ## Tools Usage
 
 ### dl\_dna
+dl\_dna supports 4 DL models: triplet loss, mobilenet, vgg, and autoencoder.
+
 Here are help messages for dl\_dna.
 ```
 Usage: dl-dna.py [<options>] <image name> : show DNA
