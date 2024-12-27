@@ -12,6 +12,8 @@
 #include <stdbool.h>
 #include <time.h>
 
+#pragma GCC diagnostic ignored "-Wunused-result"
+
 void
 errmsg(const char *fmt, ...)
 {
@@ -19,7 +21,7 @@ errmsg(const char *fmt, ...)
         char    *errmsg;
 
         va_start(ap, fmt);
-        vasprintf(&errmsg, fmt, ap);
+        (void)vasprintf(&errmsg, fmt, ap);
         va_end(ap);
 
         fprintf(stderr, "ERROR: %s\n", errmsg);
@@ -136,7 +138,6 @@ lib_iterlst(const char *path_list, bool (*func)(unsigned int, const char *, void
 	void	*lst;
 	const char	*img_name;
 	unsigned int	idx;
-	unsigned int	count;
 
 	if ((lst = lib_openlst(path_list)) == NULL)
 		return -1;

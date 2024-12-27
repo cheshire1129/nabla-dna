@@ -113,11 +113,9 @@ parse_args(int argc, char *argv[])
 }
 
 static bool
-mkdb_imgpath(const char *fname, const char *imgpath)
+extract_imgpath(const char *imgpath, dnabla_t **pdnabla, dnabla_t **pdnabla_rdx)
 {
-	dnabla_t	*dnabla, *dnabla_rdx;
 	ibmp_t	*ibmp;
-	bool	res;
 
 	ibmp = ibmp_load(imgpath);
 	if (ibmp == NULL) {
@@ -125,9 +123,89 @@ mkdb_imgpath(const char *fname, const char *imgpath)
 		return false;
 	}
 
-	dnabla_rdx = build_nabla_dna(ibmp, resol_rdx, depth_rdx);
-	dnabla = build_nabla_dna(ibmp, resol_dna, depth_dna);
+	*pdnabla_rdx = build_nabla_dna(ibmp, resol_rdx, depth_rdx);
+	*pdnabla = build_nabla_dna(ibmp, resol_dna, depth_dna);
 	ibmp_free(ibmp);
+
+	return true;
+}
+
+typedef struct {
+	dnabla_t *dnabla, *dnabla_rdx;
+} extract_img_ctx_t;
+
+static bool
+func_extract_img(const char *imgpath, void *ctx)
+{
+	extract_img_ctx_t	*pctx = (extract_img_ctx_t *)ctx;
+
+	return extract_imgpath(imgpath, &pctx->dnabla, &pctx->dnabla_rdx);
+}
+
+static bool
+extract_img(const char *imgname, dnabla_t **pdnabla, dnabla_t **pdnabla_rdx)
+{
+	extract_img_ctx_t	ctx;
+
+	if (!try_iter_imgfmts(img_folder, imgname, func_extract_img, &ctx))
+		return false;
+	*pdnabla = ctx.dnabla;
+	*pdnabla_rdx = ctx.dnabla_rdx;
+	return true;
+}
+
+typedef struct {
+	void *dynarr_dnabla, *dynarr_dnabla_rdx;
+} extract_list_ctx_t;
+
+static bool
+func_extract_list(unsigned int idx, const char *img_name, void *ctx)
+{
+	dnabla_t	*dnabla, *dnabla_rdx;
+	extract_list_ctx_t	*pctx = (extract_list_ctx_t *)ctx;
+
+	if (!extract_img(img_name, &dnabla, &dnabla_rdx))
+		return false;
+	*(dnabla_t **)dynarray_add(pctx->dynarr_dnabla) = dnabla;
+	*(dnabla_t **)dynarray_add(pctx->dynarr_dnabla_rdx) = dnabla_rdx;
+	return true;
+}
+
+static int
+extract_img_list(const char *path_list, void **pdynarr_dnabla, void **pdynarr_dnabla_rdx)
+{
+	extract_list_ctx_t	ctx;
+	void	*dynarr_dnabla, *dynarr_dnabla_rdx;
+	int	count;
+
+	dynarr_dnabla = dynarray_create(sizeof(dnabla_t *), 128);
+	dynarr_dnabla_rdx = dynarray_create(sizeof(dnabla_t *), 128);
+
+	ctx.dynarr_dnabla = dynarr_dnabla;
+	ctx.dynarr_dnabla_rdx = dynarr_dnabla_rdx;
+
+	init_tickcount();
+	if ((count = lib_iterlst(path_list, func_extract_list, &ctx)) < 0) {
+		dynarray_free(dynarr_dnabla);
+		dynarray_free(dynarr_dnabla_rdx);
+		return -1;
+	}
+	printf("extraction time: %.3f (sec)\n", (float)(get_tickcount() / 1000.0));
+
+	*pdynarr_dnabla = dynarr_dnabla;
+	*pdynarr_dnabla_rdx = dynarr_dnabla_rdx;
+
+	return count;
+}
+
+static bool
+mkdb_imgpath(const char *imgpath)
+{
+	dnabla_t	*dnabla, *dnabla_rdx;
+	bool	res;
+
+	if (!extract_imgpath(imgpath, &dnabla, &dnabla_rdx))
+		return false;
 
 	res = ndb_insert(ndb, dnabla_rdx->pixels, dnabla->pixels);
 
@@ -140,21 +218,19 @@ mkdb_imgpath(const char *fname, const char *imgpath)
 static bool
 func_mkdb_img(const char *imgpath, void *ctx)
 {
-	const char	*fname = (const char *)ctx;
-
-	return mkdb_imgpath(fname, imgpath);
+	return mkdb_imgpath(imgpath);
 }
 
 static bool
-mkdb_img(const char *fname, const char *imgname)
+mkdb_img(const char *imgname)
 {
-	return try_iter_imgfmts(img_folder, imgname, func_mkdb_img, (void *)fname);
+	return try_iter_imgfmts(img_folder, imgname, func_mkdb_img, NULL);
 }
 
 static bool
 func_mkdb_folder(const char *fname, const char *imgpath, void *ctx)
 {
-	return mkdb_imgpath(path_basename(imgpath), imgpath);
+	return mkdb_imgpath(imgpath);
 }
 
 static bool
@@ -163,21 +239,49 @@ mkdb_folder(const char *path_folder)
 	return iter_folder(path_folder, func_mkdb_folder, NULL);
 }
 
-static bool
-func_mkdb_list(unsigned int idx, const char *img_name, void *ctx)
+static void
+free_dynarr_dnablas(void *dynarr_dnabla1, void *dynarr_dnabla2)
 {
-	return mkdb_img(img_name, img_name);
+	int	count = dynarray_count(dynarr_dnabla1);
+
+	for (int i = 0; i < count; i++) {
+		dnabla_t	*dnabla;
+
+		dnabla = *(dnabla_t **)dynarray_get(dynarr_dnabla1, i + 1);
+		free_dnabla(dnabla);
+		dnabla = *(dnabla_t **)dynarray_get(dynarr_dnabla2, i + 1);
+		free_dnabla(dnabla);
+	}
+	dynarray_free(dynarr_dnabla1);
+	dynarray_free(dynarr_dnabla2);
 }
 
 static bool
 mkdb_list(const char *path_list)
 {
-	int	ret;
+	void	*dynarr_dnabla, *dynarr_dnabla_rdx;
+	bool	res = true;
+	int	count;
+
+	count = extract_img_list(path_list, &dynarr_dnabla, &dynarr_dnabla_rdx);
+	if (count < 0)
+		return false;
 
 	init_tickcount();
-	ret = lib_iterlst(path_list, func_mkdb_list, NULL);
+	for (int i = 0; i < count; i++) {
+		dnabla_t	*dnabla, *dnabla_rdx;
+
+		dnabla = *(dnabla_t **)dynarray_get(dynarr_dnabla, i + 1);
+		dnabla_rdx = *(dnabla_t **)dynarray_get(dynarr_dnabla_rdx, i + 1);
+		res = ndb_insert(ndb, dnabla_rdx->pixels, dnabla->pixels);
+		if (!res)
+			break;
+	}
 	printf("insert time: %.3f (sec)\n", (float)(get_tickcount() / 1000.0));
-	return (ret >= 0) ? true: false;
+
+	free_dynarr_dnablas(dynarr_dnabla, dynarr_dnabla_rdx);
+
+	return res;
 }
 
 static int
@@ -280,44 +384,45 @@ typedef struct {
 	double		similarity;
 } search_info_list_t;
 
-static bool
-func_search_list(unsigned int idx, const char *imgname, void *ctx)
-{
-	int	id_searched;
-	double	similarity;
-
-	id_searched = search_img(imgname, &similarity);
-	if (id_searched >= 0) {
-		search_info_list_t	*info = (search_info_list_t *)dynarray_add(ctx);
-		info->idx = idx;
-		info->id_searched = (unsigned int)id_searched;
-		info->similarity = similarity;
-	}
-	return true;
-}
-
 static void
 search_list(const char *path_list)
 {
+	void	*dynarr_dnabla, *dynarr_dnabla_rdx;
 	void	*search_infos = dynarray_create(sizeof(search_info_list_t), 16);
-	unsigned int	count, total;
+	int	count, n_searched;
+
+	count = extract_img_list(path_list, &dynarr_dnabla, &dynarr_dnabla_rdx);
+	if (count < 0)
+		return;
 
 	init_tickcount();
-	total = lib_iterlst(path_list, func_search_list, search_infos);
-	if (total < 0) {
-		errmsg("listing error");
-		return;
+	for (int i = 0; i < count; i++) {
+		dnabla_t	*dnabla, *dnabla_rdx;
+		double		similarity;
+		int	id_searched;
+
+		dnabla = *(dnabla_t **)dynarray_get(dynarr_dnabla, i + 1);
+		dnabla_rdx = *(dnabla_t **)dynarray_get(dynarr_dnabla_rdx, i + 1);
+		id_searched = ndb_search(ndb, dnabla_rdx->pixels, dnabla->pixels, &similarity);
+		if (similarity >= threshold) {
+			search_info_list_t	*info = dynarray_add(search_infos);
+			info->idx = i + 1;
+			info->id_searched = (unsigned int)id_searched;
+			info->similarity = similarity;
+		}
 	}
 	printf("search time: %.3f (sec)\n", (float)(get_tickcount() / 1000.0));
 
-	count = dynarray_count(search_infos);
-	printf("matched ratio: %.2f\n", (float)(count * 1.0 / total));
+	n_searched = dynarray_count(search_infos);
+	printf("matched ratio: %.2f (%%)\n", (float)(n_searched * 100.0 / count));
 
-	for (int i = 0; i < count; i++) {
+	for (int i = 0; i < n_searched; i++) {
 		search_info_list_t	*info = dynarray_get(search_infos, i + 1);
-		printf("%d: %d, %.4lf\n", info->idx + 1, info->id_searched, info->similarity);
+		printf("%d: %d, %.4lf\n", info->idx, info->id_searched, info->similarity);
 	}
 	dynarray_free(search_infos);
+
+	free_dynarr_dnablas(dynarr_dnabla, dynarr_dnabla_rdx);
 }
 
 int
@@ -335,7 +440,7 @@ main(int argc, char *argv[])
 			if (path_has_ext(inpath, "txt"))
 				res = mkdb_list(inpath);
 			else
-				res = mkdb_img(NULL, inpath);
+				res = mkdb_img(inpath);
 		}
 		if (res) {
 			ndb_store(ndb, path_ndb);
