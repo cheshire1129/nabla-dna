@@ -22,6 +22,8 @@ class VGG(dl_dna_model.DlDnaModel):
         res = self.dl_model.predict(data, verbose=self.verbose_level)
         # 1000 is the number of VGG classes
         # ASSUME: n_units is divisor of 1000
+        if dl_dna_model.n_units == 1000:
+            return res[0]
         cnt_avg = int(1000 / dl_dna_model.n_units)
         dna = []
         start = 0
